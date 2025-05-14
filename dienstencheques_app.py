@@ -3,7 +3,7 @@ from datetime import datetime
 import math
 
 st.set_page_config(page_title="Dienstencheque calculator", layout="centered")
-st.title("🧾 Dienstencheque Calculator")
+st.title("🧾 Dienstencheque calculator")
 
 # Inputvelden
 starttijd = st.text_input("Starttijd (vb: 08:00)", "08:00")
