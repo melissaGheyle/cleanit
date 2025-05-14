@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 import math
 
-st.set_page_config(page_title="Dienstencheque Calculator", layout="centered")
+st.set_page_config(page_title="Dienstencheque calculator", layout="centered")
 st.title("🧾 Dienstencheque Calculator")
 
 # Inputvelden
