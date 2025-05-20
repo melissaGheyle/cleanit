@@ -10,7 +10,7 @@ DATA_FILE = "verlofregistratie_2025.csv"
 
 # 📂 Stap 1: laad of initialiseer databestand
 if not os.path.exists(DATA_FILE):
-    pd.DataFrame(columns=["Naam", "Datum"]).to_csv(DATA_FILE, index=False)
+    pd.DataFrame(columns=["Naam", "Datum", "Tijdstip aanvraag"]).to_csv(DATA_FILE, index=False)
 
 # 👤 Stap 2: naam en datum invoer
 naam = st.text_input("👤 Jouw naam")
@@ -37,11 +37,15 @@ if naam.strip() and st.button("📅 Verlof aanvragen"):
         afwezige = reeds_afwezig.iloc[0]["Naam"]
         st.error(f"❌ Niet mogelijk: {afwezige} heeft al verlof op {kies_datum_str}.")
     else:
-        # ✅ Voeg verlof toe
-        nieuwe_invoer = pd.DataFrame({"Naam": [naam.strip()], "Datum": [kies_datum_str]})
+        tijdstip_aanvraag = datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+        nieuwe_invoer = pd.DataFrame({
+            "Naam": [naam.strip()],
+            "Datum": [kies_datum_str],
+            "Tijdstip aanvraag": [tijdstip_aanvraag]
+        })
         verlof_data = pd.concat([verlof_data, nieuwe_invoer], ignore_index=True)
         verlof_data.to_csv(DATA_FILE, index=False)
-        st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam.strip()}. Onder voorbehoud van voldoende verlofuren.")
+        st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam.strip()}.")
 
 # 🔘 Download-link voor het volledige bestand
 if st.button("📥 Download overzicht als CSV-bestand"):
