@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Controle per regio", layout="wide")
 
 st.title("📊 Arbeidsmarktindicatoren per regio")
-st.markdown("Voer de vijf basisgegevens in voor elke regio. De indicatoren worden automatisch berekend op basis van jouw invoer.")
+st.markdown("Vul de 5 basisgegevens in per regio. De indicatoren worden automatisch berekend en weergegeven.")
 
 def toon_indicatoren(regio, werklozen, werkenden, niet_actieven, beroepsbevolking, arbeidsleeftijd):
     st.markdown(f"### 📍 {regio}")
@@ -28,7 +28,7 @@ def toon_indicatoren(regio, werklozen, werkenden, niet_actieven, beroepsbevolkin
     st.metric(label="📊 Activiteitsgraad", value=f"{actgr} %")
     st.metric(label="💼 Werkzaamheidsgraad", value=f"{wzgr} %")
 
-# 3 kolommen naast elkaar
+# Kolommen per regio
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -44,4 +44,16 @@ with col2:
     st.subheader("🟡 Vlaanderen")
     wl_vl = st.number_input("Werklozen", key="wl_vl", value=175000, step=1000)
     wn_vl = st.number_input("Werkenden", key="wn_vl", value=2990000, step=1000)
-    na_vl = st.number_input("Niet-actieven", key="na_vl", value=580000, step=100_
+    na_vl = st.number_input("Niet-actieven", key="na_vl", value=580000, step=1000)
+    bb_vl = st.number_input("Beroepsbevolking", key="bb_vl", value=3165000, step=1000)
+    al_vl = st.number_input("Bevolking op arbeidsleeftijd", key="al_vl", value=3745000, step=1000)
+    toon_indicatoren("Vlaanderen", wl_vl, wn_vl, na_vl, bb_vl, al_vl)
+
+with col3:
+    st.subheader("🔵 Brussel")
+    wl_bru = st.number_input("Werklozen", key="wl_bru", value=95000, step=1000)
+    wn_bru = st.number_input("Werkenden", key="wn_bru", value=700000, step=1000)
+    na_bru = st.number_input("Niet-actieven", key="na_bru", value=370000, step=1000)
+    bb_bru = st.number_input("Beroepsbevolking", key="bb_bru", value=795000, step=1000)
+    al_bru = st.number_input("Bevolking op arbeidsleeftijd", key="al_bru", value=1165000, step=1000)
+    toon_indicatoren("Brussel", wl_bru, wn_bru, na_bru, bb_bru, al_bru)
