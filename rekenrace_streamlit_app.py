@@ -9,23 +9,23 @@ st.markdown("Voer de juiste waarden in om de indicatoren te berekenen. Veel succ
 st.markdown("### Gegeven blokken")
 st.info("🔵 Werklozen: **6** | 🟢 Werkenden: **24** | ⚪ Niet-actieven: **10**")
 
-# Invoer door leerling in 3 kolommen
+# Invoer door leerling in 3 kolommen, verdeeld over 2 rijen
 st.markdown("### Jouw antwoorden")
-col1, col2, col3 = st.columns(3)
 
-with col1:
+# Eerste rij
+rij1_col1, rij1_col2, _ = st.columns(3)
+with rij1_col1:
     bb = st.number_input("1️⃣ Beroepsbevolking", min_value=0, step=1)
-
-with col2:
+with rij1_col2:
     al = st.number_input("2️⃣ Bevolking op arbeidsleeftijd", min_value=0, step=1)
 
-with col3:
+# Tweede rij
+rij2_col1, rij2_col2, rij2_col3 = st.columns(3)
+with rij2_col1:
     wlgr = st.number_input("3️⃣ Werkloosheidsgraad (%)", min_value=0.0, step=0.1)
-
-with col1:
+with rij2_col2:
     actgr = st.number_input("4️⃣ Activiteitsgraad (%)", min_value=0.0, step=0.1)
-
-with col2:
+with rij2_col3:
     wzgr = st.number_input("5️⃣ Werkzaamheidsgraad (%)", min_value=0.0, step=0.1)
 
 # Correcte waarden
