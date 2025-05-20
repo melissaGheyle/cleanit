@@ -1,4 +1,4 @@
-import streamlit as st
+vimport streamlit as st
 import pandas as pd
 import datetime
 import os
@@ -41,7 +41,7 @@ if naam.strip() and st.button("📅 Verlof aanvragen"):
         nieuwe_invoer = pd.DataFrame({"Naam": [naam.strip()], "Datum": [kies_datum_str]})
         verlof_data = pd.concat([verlof_data, nieuwe_invoer], ignore_index=True)
         verlof_data.to_csv(DATA_FILE, index=False)
-        st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam.strip()}.")
+        st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam.strip()}. Onder voorbehoud van voldoende verlofuren")
 
 # 🔘 Download-link voor het volledige bestand
 if st.button("📥 Download overzicht als CSV-bestand"):
