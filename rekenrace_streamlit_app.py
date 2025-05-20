@@ -3,21 +3,30 @@ import streamlit as st
 st.set_page_config(page_title="Rekenrace", layout="centered")
 
 st.title("🎯 Rekenrace – Arbeidsmarktindicatoren")
-
 st.markdown("Voer de juiste waarden in om de indicatoren te berekenen. Veel succes!")
 
 # Gegeven blokken
 st.markdown("### Gegeven blokken")
 st.info("🔵 Werklozen: **6** | 🟢 Werkenden: **24** | ⚪ Niet-actieven: **10**")
 
-# Invoer door leerling
+# Invoer door leerling in 3 kolommen
 st.markdown("### Jouw antwoorden")
+col1, col2, col3 = st.columns(3)
 
-bb = st.number_input("1️⃣ Beroepsbevolking", min_value=0, step=1)
-al = st.number_input("2️⃣ Bevolking op arbeidsleeftijd", min_value=0, step=1)
-wlgr = st.number_input("3️⃣ Werkloosheidsgraad (%)", min_value=0.0, step=0.1)
-actgr = st.number_input("4️⃣ Activiteitsgraad (%)", min_value=0.0, step=0.1)
-wzgr = st.number_input("5️⃣ Werkzaamheidsgraad (%)", min_value=0.0, step=0.1)
+with col1:
+    bb = st.number_input("1️⃣ Beroepsbevolking", min_value=0, step=1)
+
+with col2:
+    al = st.number_input("2️⃣ Bevolking op arbeidsleeftijd", min_value=0, step=1)
+
+with col3:
+    wlgr = st.number_input("3️⃣ Werkloosheidsgraad (%)", min_value=0.0, step=0.1)
+
+with col1:
+    actgr = st.number_input("4️⃣ Activiteitsgraad (%)", min_value=0.0, step=0.1)
+
+with col2:
+    wzgr = st.number_input("5️⃣ Werkzaamheidsgraad (%)", min_value=0.0, step=0.1)
 
 # Correcte waarden
 correcte_bb = 6 + 24
