@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Controle per regio", layout="wide")
 st.title("📊 Arbeidsmarktindicatoren per regio")
 
-st.markdown("Vul de vijf gegevens per regio in. Klik vervolgens op **Controleer invoer** om na te gaan of je waarden kloppen met de officiële cijfers van 2023.")
+st.markdown("Vul de vijf gegevens per regio in. Klik op **Controleer invoer** om je antwoorden te vergelijken met de officiële cijfers van 2023.")
 
 # ✅ Officiële cijfers per regio
 officieel = {
@@ -72,43 +72,52 @@ with col3:
 if st.button("✅ Controleer invoer"):
     def controle_output(inputs, correct):
         result = {}
+        volledig_juist = True
         for key in correct:
             ingevuld = int(inputs[key]) if isinstance(inputs[key], int) else round(inputs[key], 1)
             juist = int(correct[key]) if isinstance(correct[key], int) else round(correct[key], 1)
-            result[key] = "✔️" if ingevuld == juist else f"❌ ({juist})"
-        return result
+            if ingevuld == juist:
+                result[key] = "✔️"
+            else:
+                result[key] = f"❌ ({juist})"
+                volledig_juist = False
+        return result, volledig_juist
 
     st.markdown("---")
     st.subheader("📋 Controle resultaten per regio")
 
-    be_result = controle_output(be_inputs, officieel["België"])
-    vl_result = controle_output(vl_inputs, officieel["Vlaanderen"])
-    bru_result = controle_output(bru_inputs, officieel["Brussel"])
+    be_result, be_ok = controle_output(be_inputs, officieel["België"])
+    vl_result, vl_ok = controle_output(vl_inputs, officieel["Vlaanderen"])
+    bru_result, bru_ok = controle_output(bru_inputs, officieel["Brussel"])
 
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("### 🇧🇪 België")
-        for key in be_result:
-            st.write(f"- {key}: {be_inputs[key]} {be_result[key]}")
+        for key, val in be_result.items():
+            st.write(f"- {key}: {be_inputs[key]} {val}")
     with col2:
         st.markdown("### 🟡 Vlaanderen")
-        for key in vl_result:
-            st.write(f"- {key}: {vl_inputs[key]} {vl_result[key]}")
+        for key, val in vl_result.items():
+            st.write(f"- {key}: {vl_inputs[key]} {val}")
     with col3:
         st.markdown("### 🔵 Brussel")
-        for key in bru_result:
-            st.write(f"- {key}: {bru_inputs[key]} {bru_result[key]}")
+        for key, val in bru_result.items():
+            st.write(f"- {key}: {bru_inputs[key]} {val}")
 
-    # 📊 Highlight hoogste indicatorwaarden
-    st.markdown("---")
-    st.subheader("🏆 Hoogste score per indicator")
+    alles_correct = be_ok and vl_ok and bru_ok
 
-    hoogste = {
-        "Werkloosheidsgraad": max(officieel.items(), key=lambda x: x[1]["Werkloosheidsgraad"]),
-        "Activiteitsgraad": max(officieel.items(), key=lambda x: x[1]["Activiteitsgraad"]),
-        "Werkzaamheidsgraad": max(officieel.items(), key=lambda x: x[1]["Werkzaamheidsgraad"]),
-    }
+    if alles_correct:
+        st.markdown("---")
+        st.subheader("🏆 Hoogste score per indicator (alleen zichtbaar bij correcte invoer)")
 
-    st.markdown(f"- 📉 **Hoogste werkloosheidsgraad**: **{hoogste['Werkloosheidsgraad'][0]}** ({hoogste['Werkloosheidsgraad'][1]['Werkloosheidsgraad']}%)")
-    st.markdown(f"- 📊 **Hoogste activiteitsgraad**: **{hoogste['Activiteitsgraad'][0]}** ({hoogste['Activiteitsgraad'][1]['Activiteitsgraad']}%)")
-    st.markdown(f"- 💼 **Hoogste werkzaamheidsgraad**: **{hoogste['Werkzaamheidsgraad'][0]}** ({hoogste['Werkzaamheidsgraad'][1]['Werkzaamheidsgraad']}%)")
+        hoogste = {
+            "Werkloosheidsgraad": max(officieel.items(), key=lambda x: x[1]["Werkloosheidsgraad"]),
+            "Activiteitsgraad": max(officieel.items(), key=lambda x: x[1]["Activiteitsgraad"]),
+            "Werkzaamheidsgraad": max(officieel.items(), key=lambda x: x[1]["Werkzaamheidsgraad"]),
+        }
+
+        st.markdown(f"- 📉 **Hoogste werkloosheidsgraad**: **{hoogste['Werkloosheidsgraad'][0]}** ({hoogste['Werkloosheidsgraad'][1]['Werkloosheidsgraad']}%)")
+        st.markdown(f"- 📊 **Hoogste activiteitsgraad**: **{hoogste['Activiteitsgraad'][0]}** ({hoogste['Activiteitsgraad'][1]['Activiteitsgraad']}%)")
+        st.markdown(f"- 💼 **Hoogste werkzaamheidsgraad**: **{hoogste['Werkzaamheidsgraad'][0]}** ({hoogste['Werkzaamheidsgraad'][1]['Werkzaamheidsgraad']}%)")
+    else:
+        st.info("📌 Tip: enkel als alle gegevens correct zijn ingevuld wordt de vergelijking per indicator getoond.")
