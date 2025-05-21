@@ -2,14 +2,11 @@ import streamlit as st
 import pandas as pd
 import datetime
 import os
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 
 st.set_page_config(page_title="Verlofplanner 2025", layout="wide")
 st.title("📅 Verlofplanner 2025")
 
 DATA_FILE = "verlofregistratie_2025.csv"
-SENDGRID_API_KEY = st.secrets["SENDGRID_API_KEY"]  # voeg deze toe aan Streamlit secrets
 
 # 📂 Stap 1: laad of initialiseer databestand
 if not os.path.exists(DATA_FILE):
@@ -49,19 +46,6 @@ if naam.strip() and st.button("📅 Verlof aanvragen"):
         verlof_data = pd.concat([verlof_data, nieuwe_invoer], ignore_index=True)
         verlof_data.to_csv(DATA_FILE, index=False)
         st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam.strip()}.")
-
-        # 📧 Stuur notificatiemail via SendGrid vanuit een bestaand, geverifieerd e-mailadres
-        try:
-            message = Mail(
-                from_email='melissagheyle@gmail.com',  # gebruik geverifieerd Gmail-adres
-                to_emails='melissagheyle@gmail.com',
-                subject='📅 Nieuwe verlofaanvraag',
-                html_content=f"<p><strong>{naam.strip()}</strong> heeft verlof aangevraagd op <strong>{kies_datum_str}</strong> om {tijdstip_aanvraag}.</p>"
-            )
-            sg = SendGridAPIClient(SENDGRID_API_KEY)
-            response = sg.send(message)
-        except Exception as e:
-            st.error("⚠️ E-mail verzenden mislukt. Controleer je SendGrid API-sleutel of afzenderadres.")
 
 # 🔘 Download-link voor het volledige bestand
 if st.button("📥 Download overzicht als CSV-bestand"):
