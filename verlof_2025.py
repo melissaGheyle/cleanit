@@ -8,11 +8,9 @@ st.title("📅 Verlofplanner 2025")
 
 DATA_FILE = "verlofregistratie_2025.csv"
 
-# 📂 Stap 1: laad of initialiseer databestand
 if not os.path.exists(DATA_FILE):
     pd.DataFrame(columns=["Naam", "Datum", "Tijdstip aanvraag"]).to_csv(DATA_FILE, index=False)
 
-# 👤 Stap 2: naam en datum invoer
 naam = st.text_input("👤 Jouw naam")
 kies_datum = st.date_input("📆 Kies een verlofdag", value=datetime.date(2025, 1, 1),
                             min_value=datetime.date(2025, 1, 1), max_value=datetime.date(2025, 12, 31))
@@ -21,7 +19,6 @@ kies_datum_str = kies_datum.strftime('%d-%m-%Y')
 verlof_data = pd.read_csv(DATA_FILE, dtype={"Datum": str})
 reeds_afwezig = verlof_data[verlof_data["Datum"] == kies_datum_str]
 
-# 🔎 Feedback over beschikbaarheid op gekozen datum
 if not naam.strip():
     st.warning("Vul je naam in om verder te gaan.")
 else:
@@ -31,7 +28,6 @@ else:
     else:
         st.info("✅ Deze dag is momenteel vrij.")
 
-# Invoer afhandelen
 if naam.strip() and st.button("📅 Verlof aanvragen"):
     if not reeds_afwezig.empty:
         afwezige = reeds_afwezig.iloc[0]["Naam"]
@@ -47,7 +43,6 @@ if naam.strip() and st.button("📅 Verlof aanvragen"):
         verlof_data.to_csv(DATA_FILE, index=False)
         st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam.strip()}.")
 
-# 🔘 Download-link voor het volledige bestand
 if st.button("📥 Download overzicht als CSV-bestand"):
     with open(DATA_FILE, "rb") as f:
         st.download_button(label="📄 Download verlofregistratie_2025.csv",
