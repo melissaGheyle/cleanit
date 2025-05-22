@@ -7,7 +7,7 @@ st.markdown("Vul de vijf gegevens per regio in. Klik op **Controleer invoer** om
 
 # ✅ Officiële cijfers per regio
 officieel = {
-    "Wollonië": {
+    "Wallonië": {
         "Werklozen": 129003,
         "Werkenden": 1297081,
         "Niet-actieven": 1048984,
@@ -42,7 +42,7 @@ for regio in officieel:
 
 # 📥 Invoer door gebruiker
 def invoervelden(regio, prefix, default):
-    st.subheader(f"📍 {regio}")
+    st.subheader(f"🟢 {regio}")
     wl = st.number_input("Werklozen", key=f"{prefix}_wl", value=default[0], step=1000)
     wn = st.number_input("Werkenden", key=f"{prefix}_wn", value=default[1], step=1000)
     na = st.number_input("Niet-actieven", key=f"{prefix}_na", value=default[2], step=1000)
@@ -67,7 +67,7 @@ def invoervelden(regio, prefix, default):
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    be_inputs = invoervelden("Wallonië, "be", [340000, 4870000, 1300000])
+    w_inputs = invoervelden("Wallonië", "w", [130000, 1297000, 1049000])
 with col2:
     vl_inputs = invoervelden("Vlaanderen", "vl", [175000, 2990000, 580000])
 with col3:
@@ -91,16 +91,16 @@ if st.button("✅ Controleer invoer"):
     st.markdown("---")
     st.subheader("📋 Controle resultaten per regio")
 
-    be_result, be_ok = controle_output(be_inputs, officieel["België"])
+    w_result, w_ok = controle_output(w_inputs, officieel["Wallonië"])
     vl_result, vl_ok = controle_output(vl_inputs, officieel["Vlaanderen"])
     bru_result, bru_ok = controle_output(bru_inputs, officieel["Brussel"])
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("### 🇧🇪 België")
-        for key, val in be_result.items():
-            if be_inputs[key] is not None:
-                st.write(f"- {key}: {be_inputs[key]} {val}")
+        st.markdown("### 🟢 Wallonië")
+        for key, val in w_result.items():
+            if w_inputs[key] is not None:
+                st.write(f"- {key}: {w_inputs[key]} {val}")
     with col2:
         st.markdown("### 🟡 Vlaanderen")
         for key, val in vl_result.items():
@@ -112,7 +112,7 @@ if st.button("✅ Controleer invoer"):
             if bru_inputs[key] is not None:
                 st.write(f"- {key}: {bru_inputs[key]} {val}")
 
-    alles_correct = be_ok and vl_ok and bru_ok
+    alles_correct = w_ok and vl_ok and bru_ok
 
     if alles_correct:
         st.markdown("---")
