@@ -3,12 +3,12 @@ import streamlit as st
 st.set_page_config(page_title="Controle per regio", layout="wide")
 st.title("📊 Arbeidsmarktindicatoren per regio")
 
-st.markdown("Vul de vijf gegevens per regio in. Klik op **Controleer invoer** om je antwoorden te vergelijken met de officiële cijfers van 2024.")
+st.markdown("Vul de vijf gegevens per regio in. Klik op **Controleer invoer** om je antwoorden te vergelijken met de officiële cijfers van 2023.")
 
 # ✅ Officiële cijfers per regio
 officieel = {
     "België": {
-        "Werklozen": 3306179
+        "Werklozen": 330617,
         "Werkenden": 5056315,
         "Niet-actieven": 3335799,
     },
@@ -48,9 +48,14 @@ def invoervelden(regio, prefix, default):
     na = st.number_input("Niet-actieven", key=f"{prefix}_na", value=default[2], step=1000)
     bb = wl + wn
     al = bb + na
-    wlgr = round((wl / bb) * 100, 1) if bb else 0.0
-    actgr = round((bb / al) * 100, 1) if al else 0.0
-    wzgr = round((wn / al) * 100, 1) if al else 0.0
+
+    if wl > 0 and wn > 0 and na > 0:
+        wlgr = round((wl / bb) * 100, 1) if bb else 0.0
+        actgr = round((bb / al) * 100, 1) if al else 0.0
+        wzgr = round((wn / al) * 100, 1) if al else 0.0
+    else:
+        wlgr = actgr = wzgr = None  # Graden niet tonen
+
     return {
         "Werklozen": wl, "Werkenden": wn, "Niet-actieven": na,
         "Beroepsbevolking": bb, "Bevolking op arbeidsleeftijd": al,
@@ -94,15 +99,18 @@ if st.button("✅ Controleer invoer"):
     with col1:
         st.markdown("### 🇧🇪 België")
         for key, val in be_result.items():
-            st.write(f"- {key}: {be_inputs[key]} {val}")
+            if be_inputs[key] is not None:
+                st.write(f"- {key}: {be_inputs[key]} {val}")
     with col2:
         st.markdown("### 🟡 Vlaanderen")
         for key, val in vl_result.items():
-            st.write(f"- {key}: {vl_inputs[key]} {val}")
+            if vl_inputs[key] is not None:
+                st.write(f"- {key}: {vl_inputs[key]} {val}")
     with col3:
         st.markdown("### 🔵 Brussel")
         for key, val in bru_result.items():
-            st.write(f"- {key}: {bru_inputs[key]} {val}")
+            if bru_inputs[key] is not None:
+                st.write(f"- {key}: {bru_inputs[key]} {val}")
 
     alles_correct = be_ok and vl_ok and bru_ok
 
