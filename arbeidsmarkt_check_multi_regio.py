@@ -7,10 +7,10 @@ st.markdown("Vul de vijf gegevens per regio in. Klik op **Controleer invoer** om
 
 # ✅ Officiële cijfers per regio
 officieel = {
-    "België": {
-        "Werklozen": 319000,
-        "Werkenden": 4900000,
-        "Niet-actieven": 2216000,
+    "Wollonië": {
+        "Werklozen": 129003,
+        "Werkenden": 1297081,
+        "Niet-actieven": 1048984,
     },
     "Vlaanderen": {
         "Werklozen": 121617,
@@ -67,11 +67,11 @@ def invoervelden(regio, prefix, default):
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    be_inputs = invoervelden("🇧🇪 België", "be", [340000, 4870000, 1300000])
+    be_inputs = invoervelden("Wallonië, "be", [340000, 4870000, 1300000])
 with col2:
-    vl_inputs = invoervelden("🟡 Vlaanderen", "vl", [175000, 2990000, 580000])
+    vl_inputs = invoervelden("Vlaanderen", "vl", [175000, 2990000, 580000])
 with col3:
-    bru_inputs = invoervelden("🔵 Brussel", "bru", [95000, 700000, 370000])
+    bru_inputs = invoervelden("Brussel", "bru", [95000, 700000, 370000])
 
 # ✅ Controleknop
 if st.button("✅ Controleer invoer"):
