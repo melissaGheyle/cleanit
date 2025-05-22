@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Controle per regio", layout="wide")
 st.title("📊 Arbeidsmarktindicatoren per regio")
 
-st.markdown("Vul de vijf gegevens per regio in. Klik op **Controleer invoer** om je antwoorden te vergelijken met de officiële cijfers van 2023.")
+st.markdown("Vul de vijf gegevens per regio in. Klik op **Controleer invoer** om je antwoorden te vergelijken met de officiële cijfers van 2024.")
 
 # ✅ Officiële cijfers per regio
 officieel = {
