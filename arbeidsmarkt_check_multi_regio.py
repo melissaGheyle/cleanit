@@ -8,9 +8,9 @@ st.markdown("Vul de vijf gegevens per regio in. Klik op **Controleer invoer** om
 # ✅ Officiële cijfers per regio
 officieel = {
     "België": {
-        "Werklozen": 306179,
-        "Werkenden": 5056315,
-        "Niet-actieven": 3335799,
+        "Werklozen": 319000,
+        "Werkenden": 4900000,
+        "Niet-actieven": 2216000,
     },
     "Vlaanderen": {
         "Werklozen": 121617,
