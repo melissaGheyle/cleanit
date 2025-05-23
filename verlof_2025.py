@@ -54,7 +54,7 @@ verlof_data_geldig = verlof_data[
 
 # Invoer van gebruiker
 naam = st.text_input("👤 Jouw naam").strip().capitalize()
-kies_datum = st.date_input("📆 Kies een verlofdag", value=datetime.date(2025, 1, 1),
+kies_datum = st.date_input("📆 Kies een verlofdag", value=datetime.date(2025, 5, 23),
                            min_value=datetime.date(2025, 1, 1), max_value=datetime.date(2025, 12, 31))
 kies_datum_str = kies_datum.strftime('%-d/%m/%Y')
 
@@ -63,7 +63,7 @@ reeds_afwezig = verlof_data_geldig[verlof_data_geldig["Datum"] == kies_datum_str
 aantal_huidige_boekingen = len(reeds_afwezig)
 max_toegelaten = capaciteit_per_dag.get(kies_datum_str, 1)
 
-st.markdown("📌 <small>Enkel aanvragen vanaf 1 juni 2025 tellen mee voor beschikbaarheid.</small>", unsafe_allow_html=True)
+st.markdown("📌 <small>Enkel aanvragen vanaf 23 mei 2025 tellen mee voor beschikbaarheid.</small>", unsafe_allow_html=True)
 
 # Feedback beschikbaarheid
 if not naam:
