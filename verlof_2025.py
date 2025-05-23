@@ -39,7 +39,7 @@ if not os.path.exists(DATA_FILE):
 verlof_data = pd.read_csv(DATA_FILE, dtype={"Datum": str})
 
 # Tijdstipfilter instellen
-filter_moment = datetime.datetime(2025, 6, 1, 0, 0, 0)  # Enkel aanvragen vanaf 1 juni 2025
+filter_moment = datetime.datetime(2025, 5, 24, 0, 0, 0)  # Enkel aanvragen vanaf 24 mei 2025
 verlof_data["Tijdstip aanvraag"] = pd.to_datetime(verlof_data["Tijdstip aanvraag"], format='%d-%m-%Y %H:%M:%S')
 verlof_data_geldig = verlof_data[verlof_data["Tijdstip aanvraag"] >= filter_moment]
 
