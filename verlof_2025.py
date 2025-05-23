@@ -9,37 +9,48 @@ st.title("📅 Verlofplanner 2025")
 
 DATA_FILE = "verlofregistratie_2025.csv"
 
-# Capaciteit per dag (uit jouw overzicht)
+# Google Drive downloadlink (jouw bestand)
+GOOGLE_DRIVE_CSV_URL = "https://drive.google.com/uc?export=download&id=1H2AoP_MGa3m_nIfxEaBdJewfrEMZ0CxG"
+
+# Capaciteit per dag
 capaciteit_per_dag = {
     '1/07/2025': 3, '2/07/2025': 2, '3/07/2025': 3, '4/07/2025': 2,
     '7/07/2025': 3, '8/07/2025': 4, '9/07/2025': 4, '10/07/2025': 2,
     '11/07/2025': 1, '14/07/2025': 2, '15/07/2025': 2, '16/07/2025': 3,
     '17/07/2025': 3, '18/07/2025': 3, '28/07/2025': 1, '29/07/2025': 1,
     '30/07/2025': 1, '31/07/2025': 0, '1/08/2025': 1, '4/08/2025': 0,
-    '5/08/2025': 0, '6/08/2025': 0, '7/08/2025': 1, '8/08/2025':0,
+    '5/08/2025': 0, '6/08/2025': 0, '7/08/2025': 1, '8/08/2025': 0,
     '11/08/2025': 0, '12/08/2025': 0, '13/08/2025': 0, '14/08/2025': 1,
-    '18/08/2025':0, '19/08/2025': 0, '20/08/2025': 0, '21/08/2025': 0,
+    '18/08/2025': 0, '19/08/2025': 0, '20/08/2025': 0, '21/08/2025': 0,
     '22/08/2025': 2, '25/08/2025': 0, '26/08/2025': 0, '27/08/2025': 0,
     '28/08/2025': 0, '29/08/2025': 1
 }
 
-# Bestand aanmaken indien niet aanwezig
+# Bestand ophalen van Google Drive indien lokaal niet aanwezig
 if not os.path.exists(DATA_FILE):
-    pd.DataFrame(columns=["Naam", "Datum", "Tijdstip aanvraag"]).to_csv(DATA_FILE, index=False)
+    try:
+        df = pd.read_csv(GOOGLE_DRIVE_CSV_URL)
+        df.to_csv(DATA_FILE, index=False)
+        st.info("📂 CSV-bestand is ingeladen vanaf Google Drive.")
+    except Exception as e:
+        st.error("❌ Kan CSV-bestand niet ophalen van Google Drive.")
+        df = pd.DataFrame(columns=["Naam", "Datum", "Tijdstip aanvraag"])
+        df.to_csv(DATA_FILE, index=False)
 
+# Laad lokale data
 verlof_data = pd.read_csv(DATA_FILE, dtype={"Datum": str})
 
 # Invoer
 naam = st.text_input("👤 Jouw naam").strip().capitalize()
 kies_datum = st.date_input("📆 Kies een verlofdag", value=datetime.date(2025, 1, 1),
                            min_value=datetime.date(2025, 1, 1), max_value=datetime.date(2025, 12, 31))
-kies_datum_str = kies_datum.strftime('%-d/%m/%Y')  # Formaat: 1/07/2025
+kies_datum_str = kies_datum.strftime('%-d/%m/%Y')  # bv. 1/07/2025
 
 reeds_afwezig = verlof_data[verlof_data["Datum"] == kies_datum_str]
 aantal_huidige_boekingen = len(reeds_afwezig)
 max_toegelaten = capaciteit_per_dag.get(kies_datum_str, 1)
 
-# Capaciteitscontrole
+# Feedback over beschikbaarheid
 if not naam:
     st.warning("Vul je naam in om verder te gaan.")
 else:
@@ -49,7 +60,7 @@ else:
         over = max_toegelaten - aantal_huidige_boekingen
         st.success(f"✅ Deze dag is beschikbaar ({over} plaats(en) over).")
 
-# Boekingsactie
+# Aanvraag knop
 if naam and st.button("📅 Verlof aanvragen"):
     dubbele_boeking = (verlof_data["Datum"] == kies_datum_str) & (verlof_data["Naam"] == naam)
 
@@ -68,14 +79,10 @@ if naam and st.button("📅 Verlof aanvragen"):
         verlof_data.to_csv(DATA_FILE, index=False)
         st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam}.")
 
-# Downloadoptie
+# Downloadknop
 st.markdown("### 📤 Download verlofoverzicht")
 with open(DATA_FILE, "rb") as f:
-
     st.download_button(label="📄 Download verlofregistratie_2025.csv",
                        data=f,
                        file_name="verlofregistratie_2025.csv",
                        mime="text/csv")
-
-
-
