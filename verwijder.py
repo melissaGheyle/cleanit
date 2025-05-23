@@ -63,6 +63,15 @@ with st.expander("📄 Toon alle huidige boekingen"):
 st.write("📁 Bestandslocatie:", os.getcwd())
 st.write("📄 Bestaat het bestand?", os.path.exists(DATA_FILE))
 
+# Downloadoptie
+st.markdown("### 📤 Download verlofoverzicht")
+with open(DATA_FILE, "rb") as f:
+
+    st.download_button(label="📄 Download verlofregistratie_2025.csv",
+                       data=f,
+                       file_name="verlofregistratie_2025.csv",
+                       mime="text/csv")
+
 # Toon inhoud
 if os.path.exists(DATA_FILE):
     df = pd.read_csv(DATA_FILE)
