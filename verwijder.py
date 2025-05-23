@@ -59,3 +59,11 @@ if st.button("❌ Bevestig verwijdering"):
 # --- OPTIONEEL: TABEL LATEN ZIEN ---
 with st.expander("📄 Toon alle huidige boekingen"):
     st.dataframe(verlof_data.sort_values(by=["Datum", "Naam"]))
+
+st.write("📁 Bestandslocatie:", os.getcwd())
+st.write("📄 Bestaat het bestand?", os.path.exists(DATA_FILE))
+
+# Toon inhoud
+if os.path.exists(DATA_FILE):
+    df = pd.read_csv(DATA_FILE)
+    st.write("📊 Inhoud van het bestand:", df)
