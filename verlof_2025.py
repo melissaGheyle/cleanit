@@ -88,4 +88,7 @@ if naam and st.button("📅 Verlof aanvragen"):
 # Downloadoptie
 st.markdown("### 📤 Download verlofoverzicht")
 with open(DATA_FILE, "rb") as f:
-    st.download_button(label="📄 Downlo_
+    st.download_button(label="📄 Download verlofregistratie_2025.csv",
+                       data=f,
+                       file_name="verlofregistratie_2025.csv",
+                       mime="text/csv")
