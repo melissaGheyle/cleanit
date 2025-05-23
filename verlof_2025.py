@@ -99,7 +99,7 @@ if naam and st.button("📅 Verlof aanvragen"):
         })
         verlof_data = pd.concat([verlof_data, nieuwe_invoer], ignore_index=True)
         verlof_data.to_csv(DATA_FILE, index=False)
-        st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam}.")
+        st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam}.Onder voorbehoud van voldoende verlofdagen")
 
 # Downloadoptie
 st.markdown("### 📤 Download verlofoverzicht")
