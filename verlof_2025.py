@@ -39,7 +39,7 @@ if not os.path.exists(DATA_FILE):
 verlof_data = pd.read_csv(DATA_FILE, dtype={"Datum": str})
 
 # Enkel boekingen tellen vanaf dit moment
-filter_moment = datetime.datetime(2025, 6, 1, 0, 0, 0)
+filter_moment = datetime.datetime(2025, 5, 24, 0, 0, 0)
 
 # Zet tijdstempel veilig om
 verlof_data["Tijdstip aanvraag"] = pd.to_datetime(
@@ -66,7 +66,7 @@ aantal_huidige_boekingen = len(reeds_afwezig)
 max_toegelaten = capaciteit_per_dag.get(kies_datum_str, 1)
 
 # Capaciteitscontrole en feedback
-st.markdown("📌 <small>Enkel aanvragen vanaf 1 juni 2025 tellen mee voor beschikbaarheid.</small>", unsafe_allow_html=True)
+st.markdown("📌 <small>Enkel aanvragen vanaf 24 mei 2025 tellen mee voor beschikbaarheid.</small>", unsafe_allow_html=True)
 
 if not naam:
     st.warning("Vul je naam in om verder te gaan.")
