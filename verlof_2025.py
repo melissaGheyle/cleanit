@@ -35,28 +35,45 @@ if not os.path.exists(DATA_FILE):
         df = pd.DataFrame(columns=["Naam", "Datum", "Tijdstip aanvraag"])
         df.to_csv(DATA_FILE, index=False)
 
-# Lees data
+# Lees lokale data
 verlof_data = pd.read_csv(DATA_FILE, dtype={"Datum": str})
 
-# Tijdstipfilter instellen
-filter_moment = datetime.datetime(2025, 5, 24, 0, 0, 0)  # Enkel aanvragen vanaf 24 mei 2025
-verlof_data["Tijdstip aanvraag"] = pd.to_datetime(verlof_data["Tijdstip aanvraag"], format='%d-%m-%Y %H:%M:%S')
-verlof_data_geldig = verlof_data[verlof_data["Tijdstip aanvraag"] >= filter_moment]
+# Tijdstipfilter instellen (alleen boekingen vanaf 1 juni tellen mee)
+filter_moment = datetime.datetime(2025, 6, 1, 0, 0, 0)
+
+# Stap 1: veilige omzetting naar datetime
+verlof_data["Tijdstip aanvraag"] = pd.to_datetime(
+    verlof_data["Tijdstip aanvraag"],
+    format='%d-%m-%Y %H:%M:%S',
+    errors='coerce'
+)
+
+# Stap 2: detectie foutieve tijdstempels
+ongeldige_rijen = verlof_data[verlof_data["Tijdstip aanvraag"].isna()]
+if not ongeldige_rijen.empty:
+    st.warning("⚠️ Er zijn boekingen met ongeldige of ontbrekende tijdstempels (worden genegeerd):")
+    st.dataframe(ongeldige_rijen)
+
+# Stap 3: filter op geldige, recente aanvragen
+verlof_data_geldig = verlof_data[
+    (verlof_data["Tijdstip aanvraag"].notna()) &
+    (verlof_data["Tijdstip aanvraag"] >= filter_moment)
+]
 
 # Invoer
 naam = st.text_input("👤 Jouw naam").strip().capitalize()
 kies_datum = st.date_input("📆 Kies een verlofdag", value=datetime.date(2025, 1, 1),
                            min_value=datetime.date(2025, 1, 1), max_value=datetime.date(2025, 12, 31))
-kies_datum_str = kies_datum.strftime('%-d/%m/%Y')
+kies_datum_str = kies_datum.strftime('%-d/%m/%Y')  # bv. 1/07/2025
 
-# Capaciteitscontrole op basis van gefilterde dataset
+# Beschikbaarheidscontrole (enkel geldige boekingen)
 reeds_afwezig = verlof_data_geldig[verlof_data_geldig["Datum"] == kies_datum_str]
 aantal_huidige_boekingen = len(reeds_afwezig)
 max_toegelaten = capaciteit_per_dag.get(kies_datum_str, 1)
 
-# Capaciteitsfeedback
-st.markdown("📌 <small>Enkel aanvragen vanaf 1 juni 2025 tellen mee voor de capaciteit.</small>", unsafe_allow_html=True)
+st.markdown("📌 <small>Enkel aanvragen vanaf 1 juni 2025 worden meegeteld voor beschikbaarheid.</small>", unsafe_allow_html=True)
 
+# Feedback
 if not naam:
     st.warning("Vul je naam in om verder te gaan.")
 else:
@@ -66,7 +83,7 @@ else:
         over = max_toegelaten - aantal_huidige_boekingen
         st.success(f"✅ Deze dag is beschikbaar ({over} plaats(en) over).")
 
-# Aanvraag
+# Verlof aanvragen
 if naam and st.button("📅 Verlof aanvragen"):
     dubbele_boeking = (verlof_data["Datum"] == kies_datum_str) & (verlof_data["Naam"] == naam)
 
@@ -85,7 +102,7 @@ if naam and st.button("📅 Verlof aanvragen"):
         verlof_data.to_csv(DATA_FILE, index=False)
         st.success(f"✅ Verlof geboekt op {kies_datum_str} voor {naam}.")
 
-# Downloadoptie
+# Downloadknop
 st.markdown("### 📤 Download verlofoverzicht")
 with open(DATA_FILE, "rb") as f:
     st.download_button(label="📄 Download verlofregistratie_2025.csv",
