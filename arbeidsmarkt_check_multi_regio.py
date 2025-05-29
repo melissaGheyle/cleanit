@@ -34,9 +34,9 @@ for regio in officieel:
 # 📥 Invoervelden
 def invoervelden(regio, prefix, default, emoji):
     st.subheader(f"{emoji} {regio}")
-    wl = st.number_input("Werklozen", key=f"{prefix}_wl", value=default["Werklozen"], step=1000)
-    wn = st.number_input("Werkenden", key=f"{prefix}_wn", value=default["Werkenden"], step=1000)
-    na = st.number_input("Niet-actieven", key=f"{prefix}_na", value=default["Niet-actieven"], step=1000)
+    wl = st.number_input("Werklozen", key=f"{prefix}_wl", min_value=0, step=1000)
+    wn = st.number_input("Werkenden", key=f"{prefix}_wn", min_value=0, step=1000)
+    na = st.number_input("Niet-actieven", key=f"{prefix}_na", min_value=0, step=1000)
 
     bb = wl + wn
     al = bb + na
