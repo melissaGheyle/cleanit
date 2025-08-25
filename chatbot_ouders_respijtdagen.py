@@ -99,7 +99,7 @@ opvang = st.selectbox("🧭 Welke opvang?", options=opvangs)
 # 2) Vrij invulveld voor naam kind (met suggesties)
 subset = df_all[df_all[col_opvang].astype(str).str.strip().str.casefold() == str(opvang).strip().casefold()]
 kids = sorted([v for v in subset[col_kind].unique() if str(v).strip()])
-kind_input = st.text_input("🧒 Naam kind (voor- en achternaam)", placeholder="bv. Florence Carlier")
+kind_input = st.text_input("🧒 Naam kind (voor- en achternaam)", placeholder="bv. Louis Devlieger")
 
 # Suggesties (niet klikbaar, ter hint bij tikfouten)
 if kind_input.strip():
@@ -165,3 +165,4 @@ if st.button("Toon gegevens"):
 
 st.markdown("---")
 st.caption("De eerste rij in Excel wordt als **kolomnamen** gebruikt. Filtering gebeurt op **opvang** en ingevoerde **naam kind**.")
+
