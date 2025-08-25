@@ -1,4 +1,4 @@
-# 👶 Ouderchatbot – Respijtdagen (opvang + vrije invoer naam kind)
+# 👶 Ouder - Respijtdagen (opvang + vrije invoer naam kind)
 # - Leest alle tabs uit respijtdagen.xlsx (eerste rij = kolomnamen)
 # - Stap 1: kies opvang
 # - Stap 2: tik naam kind (vrije tekst, met suggesties)
@@ -12,7 +12,7 @@ import pandas as pd
 import streamlit as st
 from difflib import get_close_matches
 
-st.set_page_config(page_title="Ouderchatbot – Respijtdagen", page_icon="👶", layout="wide")
+st.set_page_config(page_title="Ouder – Respijtdagen", page_icon="👶", layout="wide")
 EXCEL_FILE = "respijtdagen.xlsx"   # Plaats dit bestand naast dit script
 
 # ---------------- Helpers ----------------
@@ -55,7 +55,7 @@ def find_col(cols: List[str], targets: List[str]) -> Optional[str]:
     return scored[0][1] if scored and scored[0][0] > 0 else None
 
 # ---------------- UI ----------------
-st.title("👶 Ouderchatbot – Respijtdagen")
+st.title("👶 Ouder – Respijtdagen")
 st.caption("Kies **opvang** en tik **naam kind**. De bot toont de **exacte rij** uit de Excel + kernwaarden.")
 
 p = Path(EXCEL_FILE)
@@ -165,4 +165,5 @@ if st.button("Toon gegevens"):
 
 st.markdown("---")
 st.caption("De eerste rij in Excel wordt als **kolomnamen** gebruikt. Filtering gebeurt op **opvang** en ingevoerde **naam kind**.")
+
 
