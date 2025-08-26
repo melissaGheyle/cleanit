@@ -1,169 +1,116 @@
-# 👶 Ouder - Respijtdagen (opvang + vrije invoer naam kind)
-# - Leest alle tabs uit respijtdagen.xlsx (eerste rij = kolomnamen)
-# - Stap 1: kies opvang
-# - Stap 2: tik naam kind (vrije tekst, met suggesties)
-# - Antwoord: exacte rij (of best passende) + kernwaarden + downloadknop
-
-from pathlib import Path
-import re
-from typing import List, Optional
+# 👶 Ouderchatbot – Respijtdagen (Snowflake-native, met NL-kommagetallen)
+# Bron: RESPIJT.PUBLIC.RESPIJTDAGEN
+# Verwachte kolommen:
+#   OPVANG, NAAM_KIND, OPVANGPLAN, BEGINSALDO, OPGEBRUIKT, HUIDIG_SALDO, LAATSTE_UPDATE
 
 import pandas as pd
 import streamlit as st
-from difflib import get_close_matches
+from snowflake.snowpark.context import get_active_session
+from snowflake.snowpark.functions import col, upper, lit
 
-st.set_page_config(page_title="Ouder – Respijtdagen", page_icon="👶", layout="wide")
-EXCEL_FILE = "respijtdagen.xlsx"   # Plaats dit bestand naast dit script
+# ====== Snowflake objecten ======
+DB        = "RESPIJT"
+SCHEMA    = "PUBLIC"
+TABLE     = "RESPIJTDAGEN"
+WAREHOUSE = "ZP_WH"        # pas aan of laat staan; wordt genegeerd als de rol al een WH gebruikt
+# =================================
 
-# ---------------- Helpers ----------------
-def load_all_sheets(path: Path) -> pd.DataFrame:
-    """Lees alle sheets en concateneer; voeg 'Sheet' en 'ExcelRij' toe (header=rij1)."""
-    xls = pd.read_excel(path, sheet_name=None, dtype=str)  # openpyxl voor .xlsx
-    frames = []
-    for sheet, df in xls.items():
-        if df is None or df.empty:
-            continue
-        df = df.copy()
-        df.columns = [str(c).strip() for c in df.columns]
-        df = df.fillna("")
-        df.insert(0, "Sheet", sheet)
-        df["ExcelRij"] = (df.reset_index().index + 2).astype(str)  # +2: header + 1-based
-        frames.append(df)
-    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+st.set_page_config(page_title="Ouderchatbot – Respijtdagen", page_icon="👶", layout="wide")
 
-def normalize(s: str) -> str:
-    return re.sub(r"\s+", " ", (s or "").strip()).casefold()
+# Actieve Snowflake-sessie
+session = get_active_session()
+session.sql(f"USE DATABASE {DB}").collect()
+session.sql(f"USE SCHEMA {SCHEMA}").collect()
+try:
+    session.sql(f"USE WAREHOUSE {WAREHOUSE}").collect()
+except Exception:
+    # Warehouse kan al via rol/context gezet zijn
+    pass
 
-def parse_number(x) -> Optional[float]:
-    if x is None or str(x).strip() == "":
-        return None
-    s = str(x).replace(",", ".")
-    m = re.search(r"(-?\d+(?:\.\d+)?)", s)
-    return float(m.group(1)) if m else None
+# ---------- Helpers ----------
+def fmt_nl_num(x) -> str:
+    """Toon NL getal (komma). Behoud 1 decimaal als die er is; anders geheel getal."""
+    if x is None or (isinstance(x, float) and pd.isna(x)):
+        return "—"
+    try:
+        f = float(x)
+    except Exception:
+        return str(x)
+    if f.is_integer():
+        return f"{int(f)}"
+    return f"{f:.1f}".replace(".", ",")
 
-def find_col(cols: List[str], targets: List[str]) -> Optional[str]:
-    """Zoek kolom op basis van (bijna) naam; eerst exacte, dan bevat-match."""
-    lower = {c.lower(): c for c in cols}
-    for t in targets:
-        if t.lower() in lower:
-            return lower[t.lower()]
-    scored = []
-    for c in cols:
-        score = sum(t in c.lower() for t in targets)
-        scored.append((score, c))
-    scored.sort(reverse=True)
-    return scored[0][1] if scored and scored[0][0] > 0 else None
+@st.cache_data(ttl=300, show_spinner=False)
+def list_opvang() -> list[str]:
+    df = session.sql(
+        f"SELECT DISTINCT OPVANG FROM {DB}.{SCHEMA}.{TABLE} WHERE OPVANG IS NOT NULL ORDER BY 1"
+    ).to_pandas()
+    return df["OPVANG"].dropna().tolist()
+
+def query_row(opvang: str, naam: str) -> pd.DataFrame:
+    """Case-insensitive filter op opvang + naam kind, veilig via Snowpark-functies."""
+    df = (
+        session.table(f"{DB}.{SCHEMA}.{TABLE}")
+        .filter(
+            (upper(col("OPVANG")) == upper(lit(opvang))) &
+            (upper(col("NAAM_KIND")) == upper(lit(naam)))
+        )
+        .select(
+            "OPVANG", "NAAM_KIND", "OPVANGPLAN",
+            "BEGINSALDO", "OPGEBRUIKT", "HUIDIG_SALDO", "LAATSTE_UPDATE"
+        )
+        .limit(5)
+        .to_pandas()
+    )
+    return df
 
 # ---------------- UI ----------------
-st.title("👶 Ouder – Respijtdagen")
-st.caption("Kies **opvang** en tik **naam kind**. De bot toont de **exacte rij** uit de Excel + kernwaarden.")
+st.title("👶 Ouderchatbot – Respijtdagen")
+st.caption(f"Bron: {DB}.{SCHEMA}.{TABLE} — draait in Snowflake")
 
-p = Path(EXCEL_FILE)
-if not p.exists():
-    st.error(f"Bestand niet gevonden: {p.resolve()}")
-    st.stop()
+opvangs = list_opvang()
+opvang = st.selectbox("🧭 Welke opvang?", options=opvangs or ["— geen data —"])
+kind    = st.text_input("🧒 Naam kind (voor- en achternaam)")
 
-df_all = load_all_sheets(p)
-if df_all.empty:
-    st.error("Het Excelbestand lijkt leeg te zijn.")
-    st.stop()
-
-cols = list(df_all.columns)
-
-# Kolommen zoals in je voorbeeld (case-insensitive + handmatig aanpasbaar)
-col_opvang   = find_col(cols, ["opvang"])
-col_kind     = find_col(cols, ["naam kind", "kind"])
-col_plan     = find_col(cols, ["opvangplan"])
-col_begin    = find_col(cols, ["beginsaldo respijtdagen", "beginsaldo"])
-col_gebruikt = find_col(cols, ["opgebruikte respijtdagen", "opgebruikt", "gebruikt"])
-col_saldo    = find_col(cols, ["huidig saldo", "saldo"])
-col_update   = find_col(cols, ["laatste update", "update", "datum"])
-
-with st.sidebar:
-    st.subheader("📄 Ingeladen bestand")
-    st.write(f"• {EXCEL_FILE}")
-    st.markdown("---")
-    st.caption("Gevonden kolommen (pas aan indien labels afwijken):")
-    col_opvang   = st.selectbox("Kolom: opvang", options=cols, index=cols.index(col_opvang) if col_opvang in cols else 0)
-    col_kind     = st.selectbox("Kolom: naam kind", options=cols, index=cols.index(col_kind) if col_kind in cols else 1)
-    col_plan     = st.selectbox("Kolom: opvangplan", options=cols, index=cols.index(col_plan) if col_plan in cols else 2)
-    col_begin    = st.selectbox("Kolom: beginsaldo respijtdagen", options=cols, index=cols.index(col_begin) if col_begin in cols else 3)
-    col_gebruikt = st.selectbox("Kolom: opgebruikte respijtdagen", options=cols, index=cols.index(col_gebruikt) if col_gebruikt in cols else 4)
-    col_saldo    = st.selectbox("Kolom: huidig saldo", options=cols, index=cols.index(col_saldo) if col_saldo in cols else 5)
-    col_update   = st.selectbox("Kolom: laatste update", options=cols, index=cols.index(col_update) if col_update in cols else 6)
-
-# 1) Kies opvang
-opvangs = sorted([v for v in df_all[col_opvang].unique() if str(v).strip()])
-opvang = st.selectbox("🧭 Welke opvang?", options=opvangs)
-
-# 2) Vrij invulveld voor naam kind (met suggesties)
-subset = df_all[df_all[col_opvang].astype(str).str.strip().str.casefold() == str(opvang).strip().casefold()]
-kids = sorted([v for v in subset[col_kind].unique() if str(v).strip()])
-kind_input = st.text_input("🧒 Naam kind (voor- en achternaam)", placeholder="bv. Louis Devlieger")
-
-# Suggesties (niet klikbaar, ter hint bij tikfouten)
-if kind_input.strip():
-    sugg = get_close_matches(kind_input.strip(), kids, n=5, cutoff=0.6)
-    if sugg and kind_input.strip().casefold() not in [k.casefold() for k in kids]:
-        st.caption("Bedoelde je: " + " · ".join(sugg))
-
-# Actie
 if st.button("Toon gegevens"):
-    if not kind_input.strip():
+    if not opvangs:
+        st.error("Geen opvang-lijst beschikbaar (controleer tabel/rechten).")
+        st.stop()
+    if not kind.strip():
         st.warning("Vul eerst de naam van het kind in.")
         st.stop()
 
-    # 1) Exacte (case-insensitive) match
-    rows = subset[subset[col_kind].astype(str).map(lambda x: normalize(x) == normalize(kind_input))]
-
-    # 2) Fallback: dichtstbijzijnde suggestie (alleen als geen exact)
-    used_suggestion = False
-    if rows.empty:
-        close = get_close_matches(kind_input.strip(), kids, n=1, cutoff=0.7)
-        if close:
-            rows = subset[subset[col_kind].astype(str).map(lambda x: normalize(x) == normalize(close[0]))]
-            used_suggestion = not rows.empty
-
-    if rows.empty:
-        st.info("Geen rij gevonden voor deze keuze (opvang + naam kind).")
+    df = query_row(opvang, kind.strip())
+    if df.empty:
+        st.info("Geen match gevonden. Controleer spelling/case.")
         st.stop()
 
-    first = rows.iloc[0]
-    beginsaldo = parse_number(first.get(col_begin))
-    gebruikt   = parse_number(first.get(col_gebruikt))
-    saldo      = parse_number(first.get(col_saldo))
-    update     = str(first.get(col_update) or "").strip()
-    plan       = str(first.get(col_plan) or "").strip()
-
-    title = f"Resultaat voor **{first[col_kind]}** in **{opvang}**"
-    if used_suggestion:
-        title += "  _(beste match op ingevoerde naam)_"
-    st.success(title)
+    r = df.iloc[0]
+    st.success(f"Resultaat voor **{r.get('NAAM_KIND')}** in **{r.get('OPVANG')}**")
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Beginsaldo respijtdagen", f"{int(beginsaldo):d}" if beginsaldo is not None else "—")
-    c2.metric("Opgebruikte respijtdagen", f"{int(gebruikt):d}" if gebruikt is not None else "—")
-    c3.metric("Huidig saldo", f"{int(saldo):d}" if saldo is not None else "—")
+    c1.metric("Beginsaldo respijtdagen",   fmt_nl_num(r.get("BEGINSALDO")))
+    c2.metric("Opgebruikte respijtdagen",  fmt_nl_num(r.get("OPGEBRUIKT")))
+    c3.metric("Huidig saldo",              fmt_nl_num(r.get("HUIDIG_SALDO")))
 
-    st.markdown(f"**Opvangplan:** {plan or '—'}")
-    st.markdown(f"**Laatste update:** {update or '—'}")
+    st.markdown(f"**Opvangplan:** {r.get('OPVANGPLAN') or '—'}")
+    st.markdown(f"**Laatste update:** {r.get('LAATSTE_UPDATE') or '—'}")
 
     st.markdown("---")
     st.markdown("**Exacte rij(en) uit Excel**")
-    st.dataframe(rows, use_container_width=True)
 
-    # Download exact resultaat
-    csv_bytes = rows.to_csv(index=False).encode("utf-8")
-    safe_opvang = re.sub(r"[^a-z0-9_-]+", "_", str(opvang).lower())
-    safe_kind   = re.sub(r"[^a-z0-9_-]+", "_", str(first[col_kind]).lower())
+    # Voor weergave: kommagetallen tonen in NL-formaat
+    df_view = df.copy()
+    for kol in ["BEGINSALDO", "OPGEBRUIKT", "HUIDIG_SALDO"]:
+        if kol in df_view.columns:
+            df_view[kol] = df_view[kol].map(fmt_nl_num)
+
+    st.dataframe(df_view, use_container_width=True)
+
+    # Download: originele (niet-geformatteerde) waarden als CSV
     st.download_button(
-        "Download als CSV",
-        data=csv_bytes,
-        file_name=f"respijtdagen_{safe_opvang}_{safe_kind}.csv",
+        "Download resultaat (CSV)",
+        data=df.to_csv(index=False).encode("utf-8"),
+        file_name=f"respijtdagen_{r.get('OPVANG')}_{r.get('NAAM_KIND')}.csv",
         mime="text/csv",
     )
-
-st.markdown("---")
-st.caption("De eerste rij in Excel wordt als **kolomnamen** gebruikt. Filtering gebeurt op **opvang** en ingevoerde **naam kind**.")
-
-
