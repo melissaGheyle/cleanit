@@ -1,4 +1,4 @@
 streamlit>=1.32,<1.40
-pandas>=2.2.2,<3
-snowflake-connector-python>=3.10
-openpyxl>=3.1.5     # alleen nodig als je ook Excel wil kunnen lezen
+pandas>=2.2.2,<3.0
+openpyxl>=3.1.5,<4.0
+
