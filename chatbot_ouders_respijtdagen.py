@@ -1,116 +1,176 @@
-# 👶 Ouderchatbot – Respijtdagen (Snowflake-native, met NL-kommagetallen)
-# Bron: RESPIJT.PUBLIC.RESPIJTDAGEN
-# Verwachte kolommen:
-#   OPVANG, NAAM_KIND, OPVANGPLAN, BEGINSALDO, OPGEBRUIKT, HUIDIG_SALDO, LAATSTE_UPDATE
+# 👶 Ouderchatbot – Respijtdagen (Excel, géén Snowflake)
+# - Leest respijtdagen.xlsx (lokaal in repo) of via Upload
+# - Zoekt op Opvang + Naam kind (case-insensitive)
+# - Metrics met NL-kommagetallen
+# - Toont exacte rij(en) en biedt CSV-download
 
+import io
+import re
+from pathlib import Path
 import pandas as pd
 import streamlit as st
-from snowflake.snowpark.context import get_active_session
-from snowflake.snowpark.functions import col, upper, lit
 
-# ====== Snowflake objecten ======
-DB        = "RESPIJT"
-SCHEMA    = "PUBLIC"
-TABLE     = "RESPIJTDAGEN"
-WAREHOUSE = "ZP_WH"        # pas aan of laat staan; wordt genegeerd als de rol al een WH gebruikt
-# =================================
+EXCEL_FILE = "respijtdagen.xlsx"   # zet je bestand in de repo met deze naam
 
-st.set_page_config(page_title="Ouderchatbot – Respijtdagen", page_icon="👶", layout="wide")
+st.set_page_config(page_title="Ouderchatbot – Respijtdagen (Excel)", page_icon="👶", layout="wide")
+st.title("👶 Ouderchatbot – Respijtdagen")
+st.caption("Bron: Excel-bestand (alle tabs/sheets worden ingelezen)")
 
-# Actieve Snowflake-sessie
-session = get_active_session()
-session.sql(f"USE DATABASE {DB}").collect()
-session.sql(f"USE SCHEMA {SCHEMA}").collect()
-try:
-    session.sql(f"USE WAREHOUSE {WAREHOUSE}").collect()
-except Exception:
-    # Warehouse kan al via rol/context gezet zijn
-    pass
-
-# ---------- Helpers ----------
+# ---------- helpers ----------
 def fmt_nl_num(x) -> str:
-    """Toon NL getal (komma). Behoud 1 decimaal als die er is; anders geheel getal."""
+    """Toon NL getal (komma). 0 decimalen als het exact geheel is, anders 1 decimaal."""
     if x is None or (isinstance(x, float) and pd.isna(x)):
         return "—"
     try:
         f = float(x)
     except Exception:
-        return str(x)
+        # als het bv. '8,5' als string is: vervang komma en probeer opnieuw
+        try:
+            f = float(str(x).replace(",", "."))
+        except Exception:
+            return str(x)
     if f.is_integer():
         return f"{int(f)}"
     return f"{f:.1f}".replace(".", ",")
 
-@st.cache_data(ttl=300, show_spinner=False)
-def list_opvang() -> list[str]:
-    df = session.sql(
-        f"SELECT DISTINCT OPVANG FROM {DB}.{SCHEMA}.{TABLE} WHERE OPVANG IS NOT NULL ORDER BY 1"
-    ).to_pandas()
-    return df["OPVANG"].dropna().tolist()
+def _norm(s: str) -> str:
+    """normalizeer kolomnamen voor robuuste mapping."""
+    s = (s or "").strip().lower()
+    s = s.replace("\xa0", " ")
+    s = re.sub(r"[\s_-]+", " ", s)
+    return s
 
-def query_row(opvang: str, naam: str) -> pd.DataFrame:
-    """Case-insensitive filter op opvang + naam kind, veilig via Snowpark-functies."""
-    df = (
-        session.table(f"{DB}.{SCHEMA}.{TABLE}")
-        .filter(
-            (upper(col("OPVANG")) == upper(lit(opvang))) &
-            (upper(col("NAAM_KIND")) == upper(lit(naam)))
-        )
-        .select(
-            "OPVANG", "NAAM_KIND", "OPVANGPLAN",
-            "BEGINSALDO", "OPGEBRUIKT", "HUIDIG_SALDO", "LAATSTE_UPDATE"
-        )
-        .limit(5)
-        .to_pandas()
+def _map_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """hernoem kolommen van de sheet naar vaste namen."""
+    colmap = {}
+    for c in df.columns:
+        k = _norm(str(c))
+        if k in ("opvang",):
+            colmap[c] = "opvang"
+        elif k in ("naam kind", "naam_kind", "naamkind", "kind", "naam"):
+            colmap[c] = "naam_kind"
+        elif k in ("opvangplan", "plan", "opvang plan"):
+            colmap[c] = "opvangplan"
+        elif k in ("beginsaldo", "beginsaldo respijtdagen", "startsaldo"):
+            colmap[c] = "beginsaldo"
+        elif k in ("opgebruikte respijtdagen", "opgenomen dagen", "opgebruikt", "opgebruikte dagen"):
+            colmap[c] = "opgebruikt"
+        elif k in ("huidig saldo", "huidig_saldo", "saldo"):
+            colmap[c] = "huidig_saldo"
+        elif k in ("laatste update", "laatste_update", "update", "datum", "datum update"):
+            colmap[c] = "laatste_update"
+        else:
+            # laat onbekende kolommen zoals ze zijn
+            colmap[c] = c
+    return df.rename(columns=colmap)
+
+def _to_float(series: pd.Series) -> pd.Series:
+    """converteer strings als '16,5' of '16.5' naar float."""
+    return pd.to_numeric(
+        series.astype(str).str.replace("\xa0", "", regex=False).str.replace(" ", "", regex=False).str.replace(",", ".", regex=False),
+        errors="coerce"
     )
-    return df
 
-# ---------------- UI ----------------
-st.title("👶 Ouderchatbot – Respijtdagen")
-st.caption(f"Bron: {DB}.{SCHEMA}.{TABLE} — draait in Snowflake")
+@st.cache_data(show_spinner=False)
+def load_all_sheets_any(io_or_path) -> pd.DataFrame:
+    """Lees alle sheets; voeg kolommen 'Sheet' en 'ExcelRij' toe; normaliseer kolomnamen."""
+    xls = pd.read_excel(io_or_path, sheet_name=None, dtype=str)  # alles als tekst inlezen
+    frames = []
+    for sheet, df in xls.items():
+        if df is None or df.empty:
+            continue
+        df = df.copy()
+        df = _map_columns(df)
+        # Excel-rij (header is rij 1): index (0-based) + 2
+        df["Sheet"] = sheet
+        df["ExcelRij"] = (df.reset_index().index + 2).astype(str)
 
-opvangs = list_opvang()
-opvang = st.selectbox("🧭 Welke opvang?", options=opvangs or ["— geen data —"])
-kind    = st.text_input("🧒 Naam kind (voor- en achternaam)")
+        # Numeriek maken waar relevant (na mappen)
+        for kol in ("beginsaldo", "opgebruikt", "huidig_saldo"):
+            if kol in df.columns:
+                df[kol] = _to_float(df[kol])
+
+        frames.append(df)
+
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True)
+
+# ---------- data-bron ----------
+with st.sidebar:
+    st.markdown("### 📄 Excel laden")
+    uploaded = st.file_uploader("Upload een nieuw Excel-bestand", type=["xlsx"])
+    st.caption("Als je niets uploadt, wordt het bestand in de repo gebruikt: `respijtdagen.xlsx`.")
+
+# bron kiezen
+if uploaded:
+    df_all = load_all_sheets_any(uploaded)
+else:
+    if not Path(EXCEL_FILE).exists():
+        st.error(f"Bestand niet gevonden: `{EXCEL_FILE}`. Upload een Excel in de sidebar of voeg het toe aan je repo.")
+        st.stop()
+    df_all = load_all_sheets_any(EXCEL_FILE)
+
+if df_all.empty:
+    st.warning("Geen gegevens gevonden in het Excel-bestand.")
+    st.stop()
+
+# --------- UI: selectie ---------
+opvangs = sorted([v for v in df_all.get("opvang", pd.Series()).dropna().unique()])
+opvang = st.selectbox("🎯 Welke opvang?", options=opvangs or ["— geen data —"])
+kind   = st.text_input("🧒 Naam kind (voor- en achternaam)", placeholder="bv. Thio Demaj")
+
+# --------- Zoeken & tonen ---------
+def _ci(s: pd.Series) -> pd.Series:
+    return s.astype(str).str.strip().str.casefold()
 
 if st.button("Toon gegevens"):
     if not opvangs:
-        st.error("Geen opvang-lijst beschikbaar (controleer tabel/rechten).")
+        st.error("Geen opvang-waarden gevonden in Excel.")
         st.stop()
     if not kind.strip():
         st.warning("Vul eerst de naam van het kind in.")
         st.stop()
 
-    df = query_row(opvang, kind.strip())
+    mask = (_ci(df_all["opvang"]) == opvang.strip().casefold()) & (_ci(df_all["naam_kind"]) == kind.strip().casefold())
+    df = df_all.loc[mask].copy()
+
     if df.empty:
-        st.info("Geen match gevonden. Controleer spelling/case.")
+        st.info("Geen match gevonden. Controleer spelling/case of kies de juiste opvang.")
         st.stop()
 
+    # Toon eerste match als metrics
     r = df.iloc[0]
-    st.success(f"Resultaat voor **{r.get('NAAM_KIND')}** in **{r.get('OPVANG')}**")
+
+    st.success(f"Resultaat voor **{r.get('naam_kind', '')}** in **{r.get('opvang', '')}**")
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Beginsaldo respijtdagen",   fmt_nl_num(r.get("BEGINSALDO")))
-    c2.metric("Opgebruikte respijtdagen",  fmt_nl_num(r.get("OPGEBRUIKT")))
-    c3.metric("Huidig saldo",              fmt_nl_num(r.get("HUIDIG_SALDO")))
+    c1.metric("Beginsaldo respijtdagen",   fmt_nl_num(r.get("beginsaldo")))
+    c2.metric("Opgebruikte respijtdagen", fmt_nl_num(r.get("opgebruikt")))
+    c3.metric("Huidig saldo",             fmt_nl_num(r.get("huidig_saldo")))
 
-    st.markdown(f"**Opvangplan:** {r.get('OPVANGPLAN') or '—'}")
-    st.markdown(f"**Laatste update:** {r.get('LAATSTE_UPDATE') or '—'}")
+    st.markdown(f"**Opvangplan:** {r.get('opvangplan', '—') or '—'}")
+    st.markdown(f"**Laatste update:** {r.get('laatste_update', '—') or '—'}")
 
     st.markdown("---")
     st.markdown("**Exacte rij(en) uit Excel**")
 
-    # Voor weergave: kommagetallen tonen in NL-formaat
-    df_view = df.copy()
-    for kol in ["BEGINSALDO", "OPGEBRUIKT", "HUIDIG_SALDO"]:
-        if kol in df_view.columns:
-            df_view[kol] = df_view[kol].map(fmt_nl_num)
+    # Voor weergave: kommagetallen zetten met NL-notatie
+    view = df.copy()
+    for kol in ("beginsaldo", "opgebruikt", "huidig_saldo"):
+        if kol in view.columns:
+            view[kol] = view[kol].map(fmt_nl_num)
 
-    st.dataframe(df_view, use_container_width=True)
+    # kolommen iets netter ordenen als ze bestaan
+    pref_order = [k for k in ["Sheet","ExcelRij","opvang","naam_kind","opvangplan","beginsaldo","opgebruikt","huidig_saldo","laatste_update"] if k in view.columns]
+    other_cols = [c for c in view.columns if c not in pref_order]
+    view = view[pref_order + other_cols]
 
-    # Download: originele (niet-geformatteerde) waarden als CSV
+    st.dataframe(view, use_container_width=True)
+
     st.download_button(
         "Download resultaat (CSV)",
         data=df.to_csv(index=False).encode("utf-8"),
-        file_name=f"respijtdagen_{r.get('OPVANG')}_{r.get('NAAM_KIND')}.csv",
+        file_name=f"respijtdagen_{r.get('opvang','')}_{r.get('naam_kind','')}.csv",
         mime="text/csv",
     )
