@@ -7,7 +7,7 @@ import random
 
 st.set_page_config(page_title="Axenroos Communicatietool", layout="wide")
 
-st.title("🌸 Axenroos Communicatietool (stabiele versie)")
+st.title("🌸 Axenroos communicatietool")
 st.write("""
 Beantwoord de stellingen eerlijk op een schaal van **1 (helemaal niet van toepassing)** tot **5 (helemaal van toepassing)**.  
 De vragen verschijnen in willekeurige volgorde, maar blijven stabiel zodat je antwoorden bewaard blijven.
@@ -222,3 +222,4 @@ st.write("""
 - Communicatieve groei = leren **schakelen** tussen stijlen afhankelijk van de context.  
 - Observeer hoe je reageert bij stress of in groepen — dan komt je 'basisdier' het sterkst naar voren.  
 """)
+
