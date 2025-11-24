@@ -41,14 +41,8 @@ def cert_html(name, score, max_score):
 def store_feedback(msg_type, msg_main, explanation):
     st.session_state.last_fb = (msg_type, msg_main, explanation)
 
-
 def show_feedback():
     fb = st.session_state.get("last_fb", None)
-
-    # toon niets als:
-    # - last_fb niet bestaat
-    # - last_fb == None
-    # - last_fb geen tuple is
     if not fb or not isinstance(fb, tuple) or len(fb) != 3:
         return
 
@@ -60,10 +54,7 @@ def show_feedback():
         st.error(fb_msg)
 
     st.info(fb_expl)
-
-    # feedback opruimen
     st.session_state.last_fb = None
-
 
 def point_if_filled(text):
     return 1 if text.strip() != "" else 0
@@ -149,7 +140,7 @@ vragen_B = [
 
 
 # =============================================================
-# SESSION STATE
+# SESSION STATE INIT
 # =============================================================
 
 if "page" not in st.session_state:
@@ -164,24 +155,31 @@ if "max_score" not in st.session_state:
 if "idx" not in st.session_state:
     st.session_state.idx = 0
 
-if "substep" not in st.session_state:
-    st.session_state.substep = 1  # 1 = MC, 2 = open vraag bij Pikler
+if "done_m1" not in st.session_state:
+    st.session_state.done_m1 = False
+
+if "done_m2" not in st.session_state:
+    st.session_state.done_m2 = False
+
+if "done_m3" not in st.session_state:
+    st.session_state.done_m3 = False
 
 
 # =============================================================
-# GENERIC QUESTION RENDERERS
+# MODULE RUNNERS
 # =============================================================
 
 def run_mc_module(questions, module_name, next_step_function):
     show_feedback()
 
     i = st.session_state.idx
-    
+
+    # --- FIX: einde MC → doorgaan naar open vraag ---
     if i >= len(questions):
         st.session_state.idx = 0
-        st.session_state.last_fb = None   # feedback eerst leegmaken
-        next_step_function()              # ga door naar open vraag
-        st.rerun()                        # LAATSTE stap: herlaad app
+        st.session_state.last_fb = None
+        next_step_function()
+        st.rerun()
         return
 
     vraag, opties, juist, uitleg = questions[i]
@@ -201,16 +199,16 @@ def run_mc_module(questions, module_name, next_step_function):
         st.rerun()
 
 
-def run_open_module(questions, module_name, back_to_home=False, next_step_function=None):
+def run_open_module(questions, module_name, finish_flag):
     show_feedback()
 
     i = st.session_state.idx
+
     if i >= len(questions):
         st.session_state.idx = 0
-        if back_to_home:
-            st.session_state.page = "home"
-        elif next_step_function:
-            next_step_function()
+        st.session_state[finish_flag] = True
+        st.session_state.last_fb = None
+        st.session_state.page = "home"
         st.rerun()
         return
 
@@ -249,8 +247,8 @@ if st.session_state.page == "home":
         st.session_state.page = "m3"
         st.session_state.idx = 0
 
-    # Certificaat beschikbaar zodra er punten zijn
-    if st.session_state.score > 0:
+    # --- Certificaat pas nadat ALLE modules klaar zijn ---
+    if st.session_state.done_m1 and st.session_state.done_m2 and st.session_state.done_m3:
         st.subheader("📜 Certificaat genereren")
         name = st.text_input("Naam:")
 
@@ -261,19 +259,24 @@ if st.session_state.page == "home":
 
 # MODULE 1 — Pikler (MC)
 elif st.session_state.page == "m1_mc":
-    run_mc_module(pikler_mc, "Module 1 – Emmi Pikler", next_step_function=lambda: setattr(st.session_state, "page", "m1_open"))
+    run_mc_module(
+        pikler_mc,
+        "Module 1 – Emmi Pikler",
+        next_step_function=lambda: setattr(st.session_state, "page", "m1_open")
+    )
 
-# MODULE 1 — Pikler (OPEN)
+# MODULE 1 — Pikler (Open vraag)
 elif st.session_state.page == "m1_open":
-    run_open_module(pikler_open, "Module 1 – Emmi Pikler (Open Vraag)", next_step_function=lambda: setattr(st.session_state, "page", "home"))
+    run_open_module(
+        pikler_open,
+        "Module 1 – Emmi Pikler (Open Vraag)",
+        finish_flag="done_m1"
+    )
 
 # MODULE 2 — A
 elif st.session_state.page == "m2":
-    run_open_module(vragen_A, "Module 2 – Vragenlijst A", next_step_function=lambda: setattr(st.session_state, "page", "home"))
+    run_open_module(vragen_A, "Module 2 – Vragenlijst A", "done_m2")
 
 # MODULE 3 — B
 elif st.session_state.page == "m3":
-    run_open_module(vragen_B, "Module 3 – Vragenlijst B", next_step_function=lambda: setattr(st.session_state, "page", "home"))
-
-
-
+    run_open_module(vragen_B, "Module 3 – Vragenlijst B", "done_m3")
