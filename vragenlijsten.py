@@ -195,7 +195,8 @@ def run_module(title, qlist, is_mc=False):
             st.info(uitleg)
 
             st.session_state.q_index += 1
-            st.experimental_rerun()
+            st.rerun()
+
 
     # ---------------------------------------------
     # OPEN VRAAG
@@ -213,7 +214,7 @@ def run_module(title, qlist, is_mc=False):
             st.write(model)
 
             st.session_state.q_index += 1
-            st.experimental_rerun()
+            st.rerun()
 
 
 # =============================================================
@@ -269,3 +270,4 @@ elif st.session_state.page == "m2":
 
 elif st.session_state.page == "m3":
     run_module("Module 3 – Vragenlijst B", vragenlijst_B)
+
