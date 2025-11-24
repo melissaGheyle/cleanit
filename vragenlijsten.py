@@ -117,12 +117,7 @@ def home():
 
      if name:
         html = create_certificate_html(name)
-        st.download_button(
-        "📄 Download certificaat (HTML)",
-        data=html,
-        file_name="certificaat_zorgpunt.html",
-        mime="text/html"
-    )
+        st.download_button("📄 Download certificaat (HTML)",data=html,file_name="certificaat_zorgpunt.html",mime="text/html")
 
 
 def pikler():
@@ -243,5 +238,6 @@ elif st.session_state.page == "vragenlijst_a":
     vragenlijst_a()
 elif st.session_state.page == "vragenlijst_b":
     vragenlijst_b()
+
 
 
