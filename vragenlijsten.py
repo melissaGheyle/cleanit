@@ -18,46 +18,61 @@ def generate_unique_code():
     numbers = ''.join(random.choices(string.digits, k=5))
     return f"ZORG-{letters}-{numbers}"
 
-def create_certificate(name):
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-
-    # TITEL
-    c.setFont("Helvetica-Bold", 26)
-    c.drawCentredString(width / 2, height - 150, "Certificaat van deelname")
-
-    # NAAM
-    c.setFont("Helvetica", 16)
-    c.drawCentredString(width / 2, height - 220, "Dit certificaat wordt uitgereikt aan:")
-    c.setFont("Helvetica-Bold", 20)
-    c.drawCentredString(width / 2, height - 255, name)
-
-    # TEKST
-    c.setFont("Helvetica", 14)
-    c.drawCentredString(width / 2, height - 320,
-        "voor het succesvol afronden van alle pedagogische modules")
-    c.drawCentredString(width / 2, height - 345,
-        "van Zorgpunt Meetjesland.")
-
-    # DATUM
+def create_certificate_html(name):
     today = datetime.date.today().strftime("%d/%m/%Y")
-    c.setFont("Helvetica", 12)
-    c.drawCentredString(width / 2, height - 390, f"Datum: {today}")
+    unique_code = generate_unique_code()
 
-    # UNIEKE CODE
-    code = generate_unique_code()
-    c.drawCentredString(width / 2, height - 415, f"Unieke verificatiecode: {code}")
+    html = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 40px;
+            }}
+            .title {{
+                font-size: 32px;
+                font-weight: bold;
+                margin-bottom: 20px;
+            }}
+            .name {{
+                font-size: 26px;
+                margin: 20px 0;
+                font-weight: bold;
+            }}
+            .text {{
+                font-size: 18px;
+                margin: 10px 0;
+            }}
+            .footer {{
+                position: fixed;
+                bottom: 20px;
+                width: 100%;
+                text-align: center;
+                font-size: 14px;
+                color: #777;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="title">Certificaat van Deelname</div>
+        <div class="text">Dit certificaat wordt uitgereikt aan:</div>
+        <div class="name">{name}</div>
+        <div class="text">
+            voor het succesvol afronden van alle pedagogische modules<br>
+            van Zorgpunt Meetjesland.
+        </div>
+        <div class="text">Datum: {today}</div>
+        <div class="text">Unieke verificatiecode: <b>{unique_code}</b></div>
 
-    # FOOTER
-    c.setFont("Helvetica-Oblique", 10)
-    c.drawCentredString(width / 2, 40, "Zorgpunt Meetjesland – Bevestiging van deelname")
+        <div class="footer">Zorgpunt Meetjesland – Bevestiging van deelname</div>
+    </body>
+    </html>
+    """
 
-    c.showPage()
-    c.save()
+    return html
 
-    buffer.seek(0)
-    return buffer
 
 def show_mc_question(question, options, correct, explanation):
     st.write(question)
@@ -228,3 +243,4 @@ elif st.session_state.page == "vragenlijst_a":
     vragenlijst_a()
 elif st.session_state.page == "vragenlijst_b":
     vragenlijst_b()
+
