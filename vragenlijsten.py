@@ -1,11 +1,7 @@
 import streamlit as st
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.utils import ImageReader
 import random
 import string
 import datetime
-import io
 
 st.set_page_config(page_title="Zorgpunt Vragenlijsten", layout="centered")
 
@@ -84,6 +80,7 @@ def show_mc_question(question, options, correct, explanation):
         else:
             st.error(f"Fout ✖️\nHet juiste antwoord is: **{correct}**\n\n{explanation}")
 
+
 def show_open_question(question, model_answer):
     st.write(question)
     st.text_area("Jouw antwoord:", key=question)
@@ -110,14 +107,24 @@ def home():
     if st.button("➡️ Module 3: Vragenlijst B – Rollen & Procedures"):
         st.session_state.page = "vragenlijst_b"
 
-    # CERTIFICAAT TONEN ALS ALLES AFGEWERKT IS
-    if st.session_state.get("done_pikler") and st.session_state.get("done_a") and st.session_state.get("done_b"):
+    # CERTIFICAAT TONEN ALS ALLES AFGEROND IS
+    if (
+        st.session_state.get("done_pikler")
+        and st.session_state.get("done_a")
+        and st.session_state.get("done_b")
+    ):
         st.success("🎉 Je hebt alle modules afgerond!")
+
         name = st.text_input("Vul je naam in voor het certificaat (verplicht):")
 
-     if name:
-        html = create_certificate_html(name)
-        st.download_button("📄 Download certificaat (HTML)",data=html,file_name="certificaat_zorgpunt.html",mime="text/html")
+        if name:
+            html = create_certificate_html(name)
+            st.download_button(
+                "📄 Download certificaat",
+                data=html,
+                file_name="certificaat_zorgpunt.html",
+                mime="text/html"
+            )
 
 
 def pikler():
@@ -137,29 +144,8 @@ def pikler():
         "Warme natuurlijke materialen zorgen voor rust."
     )
 
-    show_mc_question(
-        "3. Welk materiaal wordt bewust gekozen?",
-        ["A. Plastic", "B. Natuurlijke materialen", "C. Elektronisch", "D. Enkel hout"],
-        "B. Natuurlijke materialen",
-        "Loose parts stimuleren creativiteit."
-    )
-
-    show_mc_question(
-        "4. Waarom maar één begeleide activiteit?",
-        ["A. Te weinig personeel", "B. Kind kan het al", "C. Niet te veel", "D. Niet opleggen"],
-        "D. Niet opleggen",
-        "Te veel sturen belemmert ontwikkeling."
-    )
-
-    show_mc_question(
-        "5. Hoe wordt zelfstandigheid bij eten bevorderd?",
-        ["A. Vast uur", "B. Grote tafel", "C. Kleine tafels", "D. Begeleider reikt alles aan"],
-        "C. Kleine tafels",
-        "Kleine groepjes geven rust."
-    )
-
     show_open_question(
-        "6. Hoe stimuleert Zorgpunt zelfstandigheid?",
+        "3. Hoe stimuleert Zorgpunt zelfstandigheid?",
         "Door materiaal op kindhoogte te zetten, kinderen keuzes te laten maken en hen actief te betrekken."
     )
 
@@ -179,16 +165,6 @@ def vragenlijst_a():
         "Welbevinden = hoe goed het kind zich voelt; betrokkenheid = hoe diep het speelt."
     )
 
-    show_open_question(
-        "2. Wat is educatieve ondersteuning?",
-        "Aansluiten bij noden van kinderen via observatie en interactie."
-    )
-
-    show_open_question(
-        "3. Wat is jouw draagkracht?",
-        "Draagkracht = mentale buffer; bij lage draagkracht steun vragen."
-    )
-
     if st.button("✔️ Module afronden"):
         st.session_state.done_a = True
         st.session_state.page = "home"
@@ -203,16 +179,6 @@ def vragenlijst_b():
     show_open_question(
         "1. Dagelijkse zorg – hoe doe jij dit?",
         "Rust, nabijheid en veilige zorg bieden."
-    )
-
-    show_open_question(
-        "2. Ontwikkelingsstimulering?",
-        "Aansluiten bij ontwikkelingsniveau via observaties."
-    )
-
-    show_open_question(
-        "3. Oudercommunicatie?",
-        "Warm, eerlijk, tijdig en respectvol."
     )
 
     if st.button("✔️ Module afronden"):
@@ -238,6 +204,3 @@ elif st.session_state.page == "vragenlijst_a":
     vragenlijst_a()
 elif st.session_state.page == "vragenlijst_b":
     vragenlijst_b()
-
-
-
