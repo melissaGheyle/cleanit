@@ -163,6 +163,7 @@ def run_mc_module(questions, module_name, next_step_function):
     show_feedback()
 
     i = st.session_state.idx
+    
     if i >= len(questions):
         st.session_state.idx = 0
         st.session_state.last_fb = None   # feedback eerst leegmaken
@@ -260,4 +261,5 @@ elif st.session_state.page == "m2":
 # MODULE 3 — B
 elif st.session_state.page == "m3":
     run_open_module(vragen_B, "Module 3 – Vragenlijst B", next_step_function=lambda: setattr(st.session_state, "page", "home"))
+
 
