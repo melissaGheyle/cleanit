@@ -115,14 +115,14 @@ def home():
         st.success("🎉 Je hebt alle modules afgerond!")
         name = st.text_input("Vul je naam in voor het certificaat (verplicht):")
 
-        if name:
-            cert = create_certificate(name)
-            st.download_button(
-                label="📄 Download certificaat (PDF)",
-                data=cert,
-                file_name="certificaat_zorgpunt.pdf",
-                mime="application/pdf"
-            )
+     if name:
+        html = create_certificate_html(name)
+        st.download_button(
+        "📄 Download certificaat (HTML)",
+        data=html,
+        file_name="certificaat_zorgpunt.html",
+        mime="text/html"
+    )
 
 
 def pikler():
@@ -243,4 +243,5 @@ elif st.session_state.page == "vragenlijst_a":
     vragenlijst_a()
 elif st.session_state.page == "vragenlijst_b":
     vragenlijst_b()
+
 
