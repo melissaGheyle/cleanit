@@ -41,15 +41,28 @@ def cert_html(name, score, max_score):
 def store_feedback(msg_type, msg_main, explanation):
     st.session_state.last_fb = (msg_type, msg_main, explanation)
 
+
 def show_feedback():
-    if "last_fb" in st.session_state:
-        t, msg, exp = st.session_state.last_fb
-        if t == "success":
-            st.success(msg)
-        else:
-            st.error(msg)
-        st.info(exp)
-        del st.session_state.last_fb
+    fb = st.session_state.get("last_fb", None)
+
+    # toon niets als:
+    # - last_fb niet bestaat
+    # - last_fb == None
+    # - last_fb geen tuple is
+    if not fb or not isinstance(fb, tuple) or len(fb) != 3:
+        return
+
+    fb_type, fb_msg, fb_expl = fb
+
+    if fb_type == "success":
+        st.success(fb_msg)
+    else:
+        st.error(fb_msg)
+
+    st.info(fb_expl)
+
+    # feedback opruimen
+    st.session_state.last_fb = None
 
 
 def point_if_filled(text):
@@ -261,5 +274,6 @@ elif st.session_state.page == "m2":
 # MODULE 3 — B
 elif st.session_state.page == "m3":
     run_open_module(vragen_B, "Module 3 – Vragenlijst B", next_step_function=lambda: setattr(st.session_state, "page", "home"))
+
 
 
