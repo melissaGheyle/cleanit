@@ -32,9 +32,18 @@ if st.button("Bereken"):
         st.error(foutmelding)
     else:
         tegoed = int(tegoed_input)
-        verschil = (einde - start).seconds / 60 + 20  # extra 20 min
 
-        netto_minuten = verschil - tegoed
+        # Ruwe werkduur
+        gewerkte_minuten = int((einde - start).seconds / 60)
+
+        # Nieuwe regel: per 60 min → +10 min
+        extra_minuten = (gewerkte_minuten // 60) * 10
+
+        # Totale minuten incl. extra
+        totaal_minuten = gewerkte_minuten + extra_minuten
+
+        # Netto berekening
+        netto_minuten = totaal_minuten - tegoed
 
         if netto_minuten <= 0:
             cheques = 0
@@ -45,7 +54,10 @@ if st.button("Bereken"):
 
         st.subheader("📋 Resultaat")
         st.text(f"""
-Totaal minuten (incl. +20 min): {int(verschil)}
+Gewerkte minuten: {gewerkte_minuten}
+Extra minuten (+10 per 60 min): {extra_minuten}
+Totaal minuten: {totaal_minuten}
+
 - Tegoed vorige keer: {tegoed} min
 = Netto minuten: {int(max(0, netto_minuten))}
 
