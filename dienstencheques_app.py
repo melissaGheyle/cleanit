@@ -36,8 +36,8 @@ if st.button("Bereken"):
         # Ruwe werkduur
         gewerkte_minuten = int((einde - start).seconds / 60)
 
-        # Nieuwe regel: per 60 min → +10 min
-        extra_minuten = (gewerkte_minuten // 60) * 10
+        # Nieuwe regel: per begonnen 60 min → +10 min
+        extra_minuten = math.ceil(gewerkte_minuten / 60) * 10
 
         # Totale minuten incl. extra
         totaal_minuten = gewerkte_minuten + extra_minuten
@@ -55,7 +55,7 @@ if st.button("Bereken"):
         st.subheader("📋 Resultaat")
         st.text(f"""
 Gewerkte minuten: {gewerkte_minuten}
-Extra minuten (+10 per 60 min): {extra_minuten}
+Extra minuten (per begonnen 60 min +10): {extra_minuten}
 Totaal minuten: {totaal_minuten}
 
 - Tegoed vorige keer: {tegoed} min
