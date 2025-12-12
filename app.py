@@ -23,7 +23,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # aanmaken indien nodig
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "melissagheyle@gmail.com"        # <-- aan te passen
-SMTP_PASS = "JOUW_APP_PASSWORD_HIER"         # <-- Gmail App Password
+SMTP_PASS = "skay tvei plvo lkql"         # <-- Gmail App Password
 
 MAIL_ONTVANGERS = [
     "melissagheyle@gmail.com",
@@ -243,3 +243,4 @@ else:
         if st.button("Status bijwerken"):
             update_status(geselecteerd_id, nieuwe_status)
             st.success("Status bijgewerkt! Herlaad de pagina om te zien.")
+
