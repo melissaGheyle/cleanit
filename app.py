@@ -39,7 +39,9 @@ SMTP_PORT = 587
 
 MAIL_ONTVANGERS = [
     "melissagheyle@gmail.com",
-    "joris_asseloos@hotmail.com"
+    "joris_asseloos@hotmail.com",
+    "medewerkers.kinderopvang@gmail.com",
+    "zorgpuntmeetjesland@gmail.com"
 ]
 
 
@@ -200,5 +202,6 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_index, nieuwe_status)
             st.success("Status bijgewerkt! Herlaad de pagina.")
+
 
 
