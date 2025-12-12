@@ -23,7 +23,6 @@ creds = Credentials.from_service_account_info(
 
 client = gspread.authorize(creds)
 
-# NIEUWE SHEET ID
 SHEET_ID = "1k03IUszL8tp_RrSx3NBuZpBLdiM-MZugTKeeNgUzYqc"
 sheet = client.open_by_key(SHEET_ID).sheet1
 
@@ -41,7 +40,7 @@ MAIL_ONTVANGERS = [
     "melissagheyle@gmail.com",
     "joris_asseloos@hotmail.com",
     "medewerkers.kinderopvang@gmail.com",
-    "zorgpuntmeetjesland@gmail.com"
+    "zorgpuntmeetjesland@gmail.com",
 ]
 
 
@@ -81,7 +80,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # ============================================
-# NIEUWE MELDING OPSLAAN IN GOOGLE SHEET
+# MELDING OPSLAAN IN GOOGLE SHEET
 # ============================================
 
 def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
@@ -96,7 +95,6 @@ def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, priorite
         fotopad,
         "Open",
     ]
-
     sheet.append_row(new_row)
 
 
@@ -104,8 +102,9 @@ def load_sheet_data():
     return sheet.get_all_values()
 
 
-def update_status(row_index, new_status):
-    sheet.update_cell(row_index, 9, new_status)
+def update_status(sheet_row_number, new_status):
+    # Status staat in kolom 9 (kolom I)
+    sheet.update_cell(sheet_row_number, 9, new_status)
 
 
 # ============================================
@@ -118,9 +117,10 @@ menu = ["Nieuwe melding", "Dashboard"]
 choice = st.sidebar.selectbox("Menu", menu)
 
 
-# ==================================================
-# PAGINA 1 – MELDING AANMAKEN
-# ==================================================
+# ============================================
+# PAGINA 1 – MELDING INDIENEN
+# ============================================
+
 if choice == "Nieuwe melding":
 
     st.title("Risico / Gevaar / Gebrek melden")
@@ -132,24 +132,13 @@ if choice == "Nieuwe melding":
     type_melding = st.selectbox("Type", ["Risico", "Gevaar", "Gebrek"])
 
     categorie = st.selectbox("Categorie", [
-        "Toezicht en handelingen",
-        "Toegang",
-        "Binnenruimtes",
-        "Binnenklimaat",
-        "Buitenspelen",
-        "Vervoer",
-        "Slapen",
-        "Verzorging",
-        "Hygiëne",
-        "Vaccinaties",
-        "Zieke kinderen en koorts",
-        "Geneesmiddelen"
+        "Toezicht en handelingen", "Toegang", "Binnenruimtes", "Binnenklimaat",
+        "Buitenspelen", "Vervoer", "Slapen", "Verzorging", "Hygiëne",
+        "Vaccinaties", "Zieke kinderen en koorts", "Geneesmiddelen"
     ])
 
     prioriteit = st.selectbox("Prioriteit", [
-        "1 – Direct oplossen",
-        "2 – Binnen de week",
-        "3 – Binnen de maand"
+        "1 – Direct oplossen", "2 – Binnen de week", "3 – Binnen de maand"
     ])
 
     foto = st.file_uploader("Upload foto (optioneel)")
@@ -171,37 +160,32 @@ if choice == "Nieuwe melding":
             st.balloons()
 
 
-# ==================================================
+# ============================================
 # PAGINA 2 – DASHBOARD
-# ==================================================
+# ============================================
+
 else:
     st.title("Dashboard Risico Meldingen")
 
-    data = load_sheet_data()
+    data = load_sheet_data()  # volledige sheet
 
     if len(data) <= 1:
         st.warning("Nog geen meldingen.")
     else:
-        headers = [
-            "Tijdstip", "Naam", "Locatie", "Omschrijving",
-            "Type", "Categorie", "Prioriteit", "Foto", "Status"
-        ]
-
-        rows = data[1:]  # skip header row
+        # Gebruik headers van Google Sheet
+        headers = data[0]
+        rows = data[1:]
 
         st.dataframe(rows, use_container_width=True)
 
-        # Status wijzigen
         st.subheader("Status aanpassen")
 
-        indices = list(range(2, len(rows) + 2))  # row numbers in sheet
-        gekozen_index = st.selectbox("Kies rijnummer", indices)
+        # Google Sheets is 1-based → eerste melding staat op rij 2
+        sheet_rows = list(range(2, len(rows) + 2))
+        gekozen_rij = st.selectbox("Kies rijnummer (Google Sheet)", sheet_rows)
 
         nieuwe_status = st.selectbox("Nieuwe status", ["Open", "In behandeling", "Opgelost"])
 
         if st.button("Status bijwerken"):
-            update_status(gekozen_index, nieuwe_status)
+            update_status(gekozen_rij, nieuwe_status)
             st.success("Status bijgewerkt! Herlaad de pagina.")
-
-
-
