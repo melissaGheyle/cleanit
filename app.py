@@ -203,7 +203,7 @@ else:
         for i, row in enumerate(rows):
             naam = row[1]
             oms = row[3][:30] + ("..." if len(row[3]) > 30 else "")
-            keuzes.append(f"{naam} — {oms}")
+            keuzes.append(f"{sheet_rows[i]} — {naam} — {oms}")
 
         keuze_label = st.selectbox("Kies melding", keuzes)
 
@@ -214,4 +214,5 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_rij, nieuwe_status)
             st.success(f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw de pagina om het resultaat te zien.")
+
 
