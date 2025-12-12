@@ -95,17 +95,16 @@ def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, priorite
         fotopad,
         "Open",
     ]
-    #sheet.append_row(new_row)
-    # Zoek de eerstvolgende lege rij en voeg daar in
-    next_row = len(sheet.get_all_values()) + 1  
+    next_row = len(sheet.get_all_values()) + 1
     sheet.insert_row(new_row, next_row)
+
 
 def load_sheet_data():
     return sheet.get_all_values()
 
 
 def update_status(row_number, new_status):
-    sheet.update_cell(row_number, 9, new_status)  # kolom 9 = Status
+    sheet.update_cell(row_number, 9, new_status)  # kolom I = status
 
 
 # ============================================
@@ -118,6 +117,7 @@ menu = ["Nieuwe melding", "Dashboard"]
 choice = st.sidebar.selectbox("Menu", menu)
 
 
+
 # ============================================
 # PAGINA 1 – MELDING INDIENEN
 # ============================================
@@ -126,9 +126,7 @@ if choice == "Nieuwe melding":
     st.title("Risico / Gevaar / Gebrek melden")
 
     naam = st.text_input("Naam medewerker *")
-    locatie = st.selectbox(
-        "Opvanglocatie *", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"]
-    )
+    locatie = st.selectbox("Opvanglocatie *", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"])
     omschrijving = st.text_area("Omschrijving *")
 
     type_melding = st.selectbox("Type", ["Risico", "Gevaar", "Gebrek"])
@@ -166,6 +164,7 @@ if choice == "Nieuwe melding":
             st.balloons()
 
 
+
 # ============================================
 # PAGINA 2 – DASHBOARD
 # ============================================
@@ -178,26 +177,42 @@ else:
     if len(data) <= 1:
         st.warning("Nog geen meldingen.")
     else:
-        headers = [
-            "Tijdstip", "Naam", "Locatie", "Omschrijving",
-            "Type", "Categorie", "Prioriteit", "Foto", "Status",
-        ]
+        headers = ["Tijdstip", "Naam", "Locatie", "Omschrijving", "Type", "Categorie", "Prioriteit", "Foto", "Status"]
+        rows = data[1:]
 
-        rows = data[1:]  # sla header over
-
-        # Tabel opmaken
         table_data = []
         for r in rows:
-            r = r + [""] * (len(headers) - len(r))  # aanvullen indien nodig
+            r = r + [""] * (len(headers) - len(r))
             table_data.append({headers[i]: r[i] for i in range(len(headers))})
 
         st.table(table_data)
 
-        st.subheader("Status aanpassen")
+        # ============================
+        # PRIORITEIT STATISTIEKEN
+        # ============================
+        st.subheader("Statistieken per prioriteit")
 
-        # ===========================
-        # Correcte rijnummers + context
-        # ===========================
+        p1 = sum(1 for r in rows if r[6].startswith("1"))
+        p2 = sum(1 for r in rows if r[6].startswith("2"))
+        p3 = sum(1 for r in rows if r[6].startswith("3"))
+
+        # BAR CHART
+        labels = ["1 – Direct oplossen", "2 – Binnen de week", "3 – Binnen de maand"]
+        values = [p1, p2, p3]
+
+        chart_data = {
+            "Prioriteit": labels,
+            "Aantal": values,
+        }
+
+        st.bar_chart(chart_data, x="Prioriteit", y="Aantal")
+
+
+        # ======================================
+        # STATUS AANPASSEN
+        # ======================================
+
+        st.subheader("Status aanpassen")
 
         sheet_rows = list(range(2, len(rows) + 2))
 
@@ -216,6 +231,3 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_rij, nieuwe_status)
             st.success(f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw de pagina om het resultaat te zien.")
-
-
-
