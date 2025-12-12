@@ -10,8 +10,6 @@ from google.oauth2.service_account import Credentials
 # ============================================
 # GOOGLE SHEETS VERBINDING
 # ============================================
-test = client.open_by_key(SHEET_ID).sheet1.get_all_values()
-st.write(test)
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -202,4 +200,5 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_index, nieuwe_status)
             st.success("Status bijgewerkt! Herlaad de pagina.")
+
 
