@@ -1,25 +1,13 @@
 import streamlit as st
-import sqlite3
 import os
+import sqlite3
 from datetime import datetime
-import smtplib
-from email.mime.text import MIMEText
 
+# STREAMLIT CLOUD PERSISTENT STORAGE
+DB_PATH = "/mount/data/meldingen.db"   # bestaat altijd
+UPLOAD_FOLDER = "/mount/data/uploads"  # mag je aanmaken
 
-# ============================
-# PERSISTENTE MAPPEN (STREAMLIT CLOUD)
-# ============================
-DATA_FOLDER = "/mount/data"
-
-if not os.path.exists(DATA_FOLDER):
-    os.makedirs(DATA_FOLDER)
-
-DB_PATH = os.path.join(DATA_FOLDER, "meldingen.db")
-
-UPLOAD_FOLDER = os.path.join(DATA_FOLDER, "uploads")
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # deze mag WEL
 
 # ============================
 # E-MAIL INSTELLINGEN
@@ -253,3 +241,4 @@ else:
         if st.button("Status bijwerken"):
             update_status(geselecteerd_id, nieuwe_status)
             st.success("Status werd bijgewerkt! Herlaad de pagina om het te zien.")
+
