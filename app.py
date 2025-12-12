@@ -7,13 +7,17 @@ from email.mime.text import MIMEText
 
 
 # ======================================================
-# BESTANDSLOCATIES (WERKT 100% OP STREAMLIT CLOUD)
+# BESTANDSLOCATIES # STREAMLIT CLOUD - PERSISTENTE OPSLAG
 # ======================================================
 
-DB_PATH = "meldingen.db"
-UPLOAD_FOLDER = "uploads"
+# /mount/data bestaat ALTIJD op Streamlit Cloud
+DATA_FOLDER = "/mount/data"
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # aanmaken indien nodig
+DB_PATH = os.path.join(DATA_FOLDER, "meldingen.db")
+UPLOAD_FOLDER = os.path.join(DATA_FOLDER, "uploads")
+
+# uploads-map mag je wel aanmaken
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # ======================================================
@@ -243,4 +247,5 @@ else:
         if st.button("Status bijwerken"):
             update_status(geselecteerd_id, nieuwe_status)
             st.success("Status bijgewerkt! Herlaad de pagina om te zien.")
+
 
