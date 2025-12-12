@@ -5,13 +5,29 @@ from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
 
+
 # ============================
-# E-MAIL SETTINGS
+# PERSISTENTE MAPPEN (STREAMLIT CLOUD)
+# ============================
+DATA_FOLDER = "/mount/data"
+
+if not os.path.exists(DATA_FOLDER):
+    os.makedirs(DATA_FOLDER)
+
+DB_PATH = os.path.join(DATA_FOLDER, "meldingen.db")
+
+UPLOAD_FOLDER = os.path.join(DATA_FOLDER, "uploads")
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+
+# ============================
+# E-MAIL INSTELLINGEN
 # ============================
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "melissagheyle@gmail.com"  # JOUW email
-SMTP_PASS = "JOUW_APP_PASSWORD_HIER"   # Gmail App Password invullen
+SMTP_USER = "melissagheyle@gmail.com"
+SMTP_PASS = "JOUW_APP_PASSWORD_HIER"  # VERANDER DIT
 
 MAIL_ONTVANGERS = [
     "melissagheyle@gmail.com",
@@ -21,6 +37,7 @@ MAIL_ONTVANGERS = [
 
 def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving):
     onderwerp = "Nieuwe risico melding binnen Zorgpunt"
+
     html = f"""
     <h3>Nieuwe risico melding</h3>
     <p><b>Naam:</b> {naam}</p>
@@ -48,8 +65,6 @@ def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
 # ============================
 # DATABASE SETUP
 # ============================
-DB_PATH = "meldingen.db"
-
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -77,22 +92,27 @@ init_db()
 # SAVE FUNCTION
 # ============================
 def save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("""
-        INSERT INTO meldingen 
-        (timestamp, naam, locatie, omschrijving, type, categorie, prioriteit, fotopad, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad, "Open"
-    ))
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO meldingen 
+            (timestamp, naam, locatie, omschrijving, type, categorie, prioriteit, fotopad, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad, "Open"
+        ))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Kon melding niet opslaan: {e}")
+        return False
 
 
 # ============================
-# LOAD DATA
+# LOAD ALL MELDINGEN
 # ============================
 def load_meldingen():
     conn = sqlite3.connect(DB_PATH)
@@ -104,7 +124,7 @@ def load_meldingen():
 
 
 # ============================
-# UPDATE STATUS
+# STATUS UPDATE FUNCTIE
 # ============================
 def update_status(melding_id, nieuwe_status):
     conn = sqlite3.connect(DB_PATH)
@@ -122,17 +142,17 @@ st.set_page_config(page_title="Zorgpunt Risico Meldingen", layout="wide")
 menu = ["Nieuwe melding", "Dashboard"]
 choice = st.sidebar.selectbox("Menu", menu)
 
-# ========================================
-# MELDING PAGINA
-# ========================================
+
+# =====================================================
+# PAGINA 1 — NIEUWE MELDING
+# =====================================================
 if choice == "Nieuwe melding":
 
-    st.title("Melding risico / gevaar / gebrek")
+    st.title("Risico / gevaar / gebrek melden")
 
     st.info("""
-    Via dit formulier kan u **risico’s, gevaren of gebreken** melden die u vaststelt in de opvang.
-    Deze meldingen maken deel uit van de **officiële risicoanalyse**.
-    Vul steeds uw **naam** en **opvanglocatie** in.
+    Via dit formulier kan u risico’s, gevaren of gebreken melden die u vaststelt in de opvang.  
+    Deze meldingen maken deel uit van de officiële risicoanalyse.
     """)
 
     naam = st.text_input("Naam medewerker *")
@@ -166,26 +186,24 @@ if choice == "Nieuwe melding":
     fotopad = ""
 
     if foto:
-        if not os.path.exists("uploads"):
-            os.makedirs("uploads")
-        fotopad = os.path.join("uploads", foto.name)
-        with open(fotopad, "wb") as f:
+        save_path = os.path.join(UPLOAD_FOLDER, foto.name)
+        with open(save_path, "wb") as f:
             f.write(foto.getbuffer())
+        fotopad = save_path
 
     if st.button("Melding verzenden"):
-
         if naam.strip() == "" or omschrijving.strip() == "":
             st.error("Gelieve naam en omschrijving verplicht in te vullen.")
         else:
-            save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad)
-            stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
-            st.success("Melding succesvol opgeslagen!")
-            st.balloons()
+            if save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
+                stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
+                st.success("Melding succesvol opgeslagen!")
+                st.balloons()
 
 
-# ========================================
-# DASHBOARD PAGINA
-# ========================================
+# =====================================================
+# PAGINA 2 — DASHBOARD
+# =====================================================
 else:
     st.title("Dashboard risico meldingen")
 
@@ -194,18 +212,18 @@ else:
     if not rows:
         st.warning("Nog geen meldingen geregistreerd.")
     else:
-        # Tabel tonen
         kolommen = [
             "ID", "Tijdstip", "Naam", "Locatie", "Omschrijving",
             "Type", "Categorie", "Prioriteit", "Foto", "Status"
         ]
 
-        df_data = []
+        data = []
         for r in rows:
-            df_data.append(list(r))
+            data.append(list(r))
 
-        st.dataframe(df_data, use_container_width=True)
+        st.dataframe(data, use_container_width=True)
 
+        # Prioriteitsoverzicht
         st.subheader("Overzicht per prioriteit")
 
         conn = sqlite3.connect(DB_PATH)
@@ -224,22 +242,14 @@ else:
         st.metric("Prioriteit 2 – Binnen de week", p2 or 0)
         st.metric("Prioriteit 3 – Binnen de maand", p3 or 0)
 
-        st.success("Dashboard geladen.")
-
-        # --------------------------------
-        # STATUS WIJZIGEN
-        # --------------------------------
-        st.subheader("Status wijzigen")
+        # STATUS WIJZIGING
+        st.subheader("Status aanpassen")
 
         ids = [r[0] for r in rows]
         geselecteerd_id = st.selectbox("Kies melding ID", ids)
 
-        nieuwe_status = st.selectbox("Nieuwe status", [
-            "Open",
-            "In behandeling",
-            "Opgelost"
-        ])
+        nieuwe_status = st.selectbox("Nieuwe status", ["Open", "In behandeling", "Opgelost"])
 
         if st.button("Status bijwerken"):
             update_status(geselecteerd_id, nieuwe_status)
-            st.success("Status werd bijgewerkt! Herlaad de pagina om te zien.")
+            st.success("Status werd bijgewerkt! Herlaad de pagina om het te zien.")
