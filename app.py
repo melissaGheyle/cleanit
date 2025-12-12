@@ -171,6 +171,51 @@ if choice == "Nieuwe melding":
 
 else:
     st.title("Dashboard Risico Meldingen")
+    # ============================================
+    # KLEINERE LETTERTYPES VOOR DASHBOARD
+    # ============================================
+    
+    st.markdown("""
+    <style>
+    
+    /* Maak algemene tekst kleiner */
+    body, p, div {
+        font-size: 14px !important;
+    }
+    
+    /* Tabeltekst kleiner */
+    .dataframe tbody td {
+        font-size: 13px !important;
+    }
+    
+    .dataframe thead th {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Titel kleiner */
+    h1 {
+        font-size: 28px !important;
+    }
+    
+    /* Subheaders (zoals 'Overzicht per prioriteit') */
+    h2, h3 {
+        font-size: 20px !important;
+    }
+    
+    /* Selectbox labels kleiner */
+    label {
+        font-size: 14px !important;
+    }
+    
+    /* Items in selectbox dropdown kleiner */
+    .css-10trblm {
+        font-size: 13px !important;
+    }
+    
+    </style>
+    """, unsafe_allow_html=True)
+
 
     data = load_sheet_data()
 
@@ -227,4 +272,5 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_rij, nieuwe_status)
             st.success(f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw de pagina om het resultaat te zien.")
+
 
