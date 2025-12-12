@@ -95,8 +95,10 @@ def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, priorite
         fotopad,
         "Open",
     ]
-    sheet.append_row(new_row)
-
+    #sheet.append_row(new_row)
+    # Zoek de eerstvolgende lege rij en voeg daar in
+    next_row = len(sheet.get_all_values()) + 1  
+    sheet.insert_row(new_row, next_row)
 
 def load_sheet_data():
     return sheet.get_all_values()
@@ -214,5 +216,6 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_rij, nieuwe_status)
             st.success(f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw de pagina om het resultaat te zien.")
+
 
 
