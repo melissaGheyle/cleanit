@@ -173,7 +173,7 @@ else:
         st.warning("Nog geen meldingen.")
     else:
         # Gebruik headers van Google Sheet
-        headers = data[0]
+        headers = data[1]
         rows = data[1:]
 
         st.dataframe(rows, use_container_width=True)
@@ -189,3 +189,4 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_rij, nieuwe_status)
             st.success("Status bijgewerkt! Herlaad de pagina.")
+
