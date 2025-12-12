@@ -1,21 +1,29 @@
 import streamlit as st
-import os
 import sqlite3
+import os
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
 
-# STREAMLIT CLOUD PERSISTENT STORAGE
-DB_PATH = "/mount/data/meldingen.db"   # bestaat altijd
-UPLOAD_FOLDER = "/mount/data/uploads"  # mag je aanmaken
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # deze mag WEL
+# ======================================================
+# BESTANDSLOCATIES (WERKT 100% OP STREAMLIT CLOUD)
+# ======================================================
 
-# ============================
+DB_PATH = "meldingen.db"
+UPLOAD_FOLDER = "uploads"
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # aanmaken indien nodig
+
+
+# ======================================================
 # E-MAIL INSTELLINGEN
-# ============================
+# ======================================================
+
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "melissagheyle@gmail.com"
-SMTP_PASS = "JOUW_APP_PASSWORD_HIER"  # VERANDER DIT
+SMTP_USER = "melissagheyle@gmail.com"        # <-- aan te passen
+SMTP_PASS = "JOUW_APP_PASSWORD_HIER"         # <-- Gmail App Password
 
 MAIL_ONTVANGERS = [
     "melissagheyle@gmail.com",
@@ -47,12 +55,13 @@ def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
             server.login(SMTP_USER, SMTP_PASS)
             server.sendmail(SMTP_USER, MAIL_ONTVANGERS, msg.as_string())
     except Exception as e:
-        st.error(f"Kon mail niet verzenden: {e}")
+        st.error(f"Kon geen e-mail verzenden: {e}")
 
 
-# ============================
-# DATABASE SETUP
-# ============================
+# ======================================================
+# DATABASE INITIALISATIE
+# ======================================================
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -76,9 +85,10 @@ def init_db():
 init_db()
 
 
-# ============================
-# SAVE FUNCTION
-# ============================
+# ======================================================
+# DATABASE FUNCTIES
+# ======================================================
+
 def save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -99,9 +109,6 @@ def save_melding(naam, locatie, omschrijving, type_melding, categorie, prioritei
         return False
 
 
-# ============================
-# LOAD ALL MELDINGEN
-# ============================
 def load_meldingen():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -111,9 +118,6 @@ def load_meldingen():
     return rows
 
 
-# ============================
-# STATUS UPDATE FUNCTIE
-# ============================
 def update_status(melding_id, nieuwe_status):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -122,30 +126,31 @@ def update_status(melding_id, nieuwe_status):
     conn.close()
 
 
-# ============================
-# STREAMLIT UI
-# ============================
+# ======================================================
+# STREAMLIT APP
+# ======================================================
+
 st.set_page_config(page_title="Zorgpunt Risico Meldingen", layout="wide")
 
 menu = ["Nieuwe melding", "Dashboard"]
 choice = st.sidebar.selectbox("Menu", menu)
 
 
-# =====================================================
-# PAGINA 1 — NIEUWE MELDING
-# =====================================================
+# ======================================================
+# PAGINA 1 — MELDING INDIENEN
+# ======================================================
 if choice == "Nieuwe melding":
 
-    st.title("Risico / gevaar / gebrek melden")
+    st.title("Risico / Gevaar / Gebrek melden")
 
     st.info("""
-    Via dit formulier kan u risico’s, gevaren of gebreken melden die u vaststelt in de opvang.  
+    U kan hier risico’s, gevaren of gebreken melden die u vaststelt in de opvang.  
     Deze meldingen maken deel uit van de officiële risicoanalyse.
     """)
 
     naam = st.text_input("Naam medewerker *")
     locatie = st.selectbox("Opvanglocatie *", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"])
-    omschrijving = st.text_area("Omschrijving van het risico / gevaar / gebrek *", height=150)
+    omschrijving = st.text_area("Omschrijving *", height=150)
 
     type_melding = st.selectbox("Type melding", ["Risico", "Gevaar", "Gebrek"])
 
@@ -180,8 +185,8 @@ if choice == "Nieuwe melding":
         fotopad = save_path
 
     if st.button("Melding verzenden"):
-        if naam.strip() == "" or omschrijving.strip() == "":
-            st.error("Gelieve naam en omschrijving verplicht in te vullen.")
+        if not naam or not omschrijving:
+            st.error("Naam en omschrijving zijn verplicht.")
         else:
             if save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
                 stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
@@ -189,30 +194,27 @@ if choice == "Nieuwe melding":
                 st.balloons()
 
 
-# =====================================================
+# ======================================================
 # PAGINA 2 — DASHBOARD
-# =====================================================
+# ======================================================
 else:
     st.title("Dashboard risico meldingen")
 
     rows = load_meldingen()
 
     if not rows:
-        st.warning("Nog geen meldingen geregistreerd.")
+        st.warning("Nog geen meldingen.")
     else:
         kolommen = [
             "ID", "Tijdstip", "Naam", "Locatie", "Omschrijving",
             "Type", "Categorie", "Prioriteit", "Foto", "Status"
         ]
 
-        data = []
-        for r in rows:
-            data.append(list(r))
-
+        data = [list(row) for row in rows]
         st.dataframe(data, use_container_width=True)
 
-        # Prioriteitsoverzicht
-        st.subheader("Overzicht per prioriteit")
+        # PRIORITEIT OVERZICHT
+        st.subheader("Prioriteiten")
 
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
@@ -226,11 +228,11 @@ else:
         p1, p2, p3 = c.fetchone()
         conn.close()
 
-        st.metric("Prioriteit 1 – Direct oplossen", p1 or 0)
-        st.metric("Prioriteit 2 – Binnen de week", p2 or 0)
-        st.metric("Prioriteit 3 – Binnen de maand", p3 or 0)
+        st.metric("1 – Direct oplossen", p1 or 0)
+        st.metric("2 – Binnen de week", p2 or 0)
+        st.metric("3 – Binnen de maand", p3 or 0)
 
-        # STATUS WIJZIGING
+        # STATUS WIJZIGEN
         st.subheader("Status aanpassen")
 
         ids = [r[0] for r in rows]
@@ -240,5 +242,4 @@ else:
 
         if st.button("Status bijwerken"):
             update_status(geselecteerd_id, nieuwe_status)
-            st.success("Status werd bijgewerkt! Herlaad de pagina om het te zien.")
-
+            st.success("Status bijgewerkt! Herlaad de pagina om te zien.")
