@@ -176,7 +176,27 @@ else:
         headers = data[0]
         rows = data[1:]
 
-        st.dataframe(rows, use_container_width=True)
+        
+        # -------------------------------
+        # TABEL MET HEADERS TONEN
+        # -------------------------------
+
+        headers = [
+            "Tijdstip", "Naam", "Locatie", "Omschrijving",
+            "Type", "Categorie", "Prioriteit", "Foto", "Status"
+        ]
+        
+        # Zet data om naar dictionary-lijst zodat Streamlit kolomnamen toont
+        table_data = []
+        for row in rows:
+            if len(row) < len(headers):
+                # vul lege cellen aan zodat lengte klopt
+                row = row + [""] * (len(headers) - len(row))
+        
+            item = {headers[i]: row[i] for i in range(len(headers))}
+            table_data.append(item)
+        
+        st.table(table_data)
 
         st.subheader("Status aanpassen")
 
@@ -189,5 +209,6 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_rij, nieuwe_status)
             st.success("Status bijgewerkt! Herlaad de pagina.")
+
 
 
