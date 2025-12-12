@@ -4,6 +4,24 @@ import os
 from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
+import gspread
+from google.oauth2.service_account import Credentials
+
+
+SCOPE = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
+creds = Credentials.from_service_account_info(
+    st.secrets["gcp"],
+    scopes=SCOPE
+)
+
+client = gspread.authorize(creds)
+
+SHEET_ID = "14zLgDSbj_bjuaPfLCyPg_7jJOVY_vfHHvpPsSzkSGZQ"
+sheet = client.open_by_key(SHEET_ID).sheet1
 
 # ======================================
 # BESTANDSLOCATIES — WERKT 100% OP STREAMLIT CLOUD
@@ -243,6 +261,7 @@ else:
         if st.button("Status bijwerken"):
             update_status(geselecteerd_id, nieuwe_status)
             st.success("Status bijgewerkt! Herlaad de pagina om te zien.")
+
 
 
 
