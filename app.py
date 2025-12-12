@@ -187,25 +187,21 @@ else:
 
         st.table(table_data)
 
+       
         # ============================
-        # PRIORITEIT STATISTIEKEN
+        # PRIORITEIT STATISTIEKEN (compact)
         # ============================
-        st.subheader("Statistieken per prioriteit")
+        st.subheader("Overzicht per prioriteit")
 
         p1 = sum(1 for r in rows if r[6].startswith("1"))
         p2 = sum(1 for r in rows if r[6].startswith("2"))
         p3 = sum(1 for r in rows if r[6].startswith("3"))
 
-        # BAR CHART
-        labels = ["1 – Direct oplossen", "2 – Binnen de week", "3 – Binnen de maand"]
-        values = [p1, p2, p3]
+        col1, col2, col3 = st.columns(3)
+        col1.metric("1 – Direct oplossen", p1)
+        col2.metric("2 – Binnen de week", p2)
+        col3.metric("3 – Binnen de maand", p3)
 
-        chart_data = {
-            "Prioriteit": labels,
-            "Aantal": values,
-        }
-
-        st.bar_chart(chart_data, x="Prioriteit", y="Aantal")
 
 
         # ======================================
@@ -231,3 +227,4 @@ else:
         if st.button("Status bijwerken"):
             update_status(gekozen_rij, nieuwe_status)
             st.success(f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw de pagina om het resultaat te zien.")
+
