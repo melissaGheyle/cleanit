@@ -13,12 +13,12 @@ from google.oauth2.service_account import Credentials
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
+    "https://www.googleapis.com/auth/drive",
 ]
 
 creds = Credentials.from_service_account_info(
     st.secrets["gcp"],
-    scopes=SCOPE
+    scopes=SCOPE,
 )
 
 client = gspread.authorize(creds)
@@ -72,7 +72,7 @@ def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
 
 
 # ============================================
-# FOTO-UPLOAD MAP
+# FOTO-UPLOAD
 # ============================================
 
 UPLOAD_FOLDER = "uploads"
@@ -80,7 +80,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # ============================================
-# MELDING OPSLAAN IN GOOGLE SHEET
+# GOOGLE SHEET FUNCTIES
 # ============================================
 
 def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
@@ -102,13 +102,12 @@ def load_sheet_data():
     return sheet.get_all_values()
 
 
-def update_status(sheet_row_number, new_status):
-    # Status staat in kolom 9 (kolom I)
-    sheet.update_cell(sheet_row_number, 9, new_status)
+def update_status(row_number, new_status):
+    sheet.update_cell(row_number, 9, new_status)  # kolom 9 = Status
 
 
 # ============================================
-# STREAMLIT INTERFACE
+# STREAMLIT UI
 # ============================================
 
 st.set_page_config(page_title="Zorgpunt Risico Meldingen", layout="wide")
@@ -122,24 +121,29 @@ choice = st.sidebar.selectbox("Menu", menu)
 # ============================================
 
 if choice == "Nieuwe melding":
-
     st.title("Risico / Gevaar / Gebrek melden")
 
     naam = st.text_input("Naam medewerker *")
-    locatie = st.selectbox("Opvanglocatie *", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"])
+    locatie = st.selectbox(
+        "Opvanglocatie *", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"]
+    )
     omschrijving = st.text_area("Omschrijving *")
 
     type_melding = st.selectbox("Type", ["Risico", "Gevaar", "Gebrek"])
 
-    categorie = st.selectbox("Categorie", [
-        "Toezicht en handelingen", "Toegang", "Binnenruimtes", "Binnenklimaat",
-        "Buitenspelen", "Vervoer", "Slapen", "Verzorging", "Hygiëne",
-        "Vaccinaties", "Zieke kinderen en koorts", "Geneesmiddelen"
-    ])
+    categorie = st.selectbox(
+        "Categorie",
+        [
+            "Toezicht en handelingen", "Toegang", "Binnenruimtes", "Binnenklimaat",
+            "Buitenspelen", "Vervoer", "Slapen", "Verzorging", "Hygiëne",
+            "Vaccinaties", "Zieke kinderen en koorts", "Geneesmiddelen",
+        ],
+    )
 
-    prioriteit = st.selectbox("Prioriteit", [
-        "1 – Direct oplossen", "2 – Binnen de week", "3 – Binnen de maand"
-    ])
+    prioriteit = st.selectbox(
+        "Prioriteit",
+        ["1 – Direct oplossen", "2 – Binnen de week", "3 – Binnen de maand"],
+    )
 
     foto = st.file_uploader("Upload foto (optioneel)")
     fotopad = ""
@@ -167,48 +171,46 @@ if choice == "Nieuwe melding":
 else:
     st.title("Dashboard Risico Meldingen")
 
-    data = load_sheet_data()  # volledige sheet
+    data = load_sheet_data()
 
     if len(data) <= 1:
         st.warning("Nog geen meldingen.")
     else:
-        # Gebruik headers van Google Sheet
-        headers = data[0]
-        rows = data[1:]
-
-        
-        # -------------------------------
-        # TABEL MET HEADERS TONEN
-        # -------------------------------
-
         headers = [
             "Tijdstip", "Naam", "Locatie", "Omschrijving",
-            "Type", "Categorie", "Prioriteit", "Foto", "Status"
+            "Type", "Categorie", "Prioriteit", "Foto", "Status",
         ]
-        
-        # Zet data om naar dictionary-lijst zodat Streamlit kolomnamen toont
+
+        rows = data[1:]  # sla header over
+
+        # Tabel opmaken
         table_data = []
-        for row in rows:
-            if len(row) < len(headers):
-                # vul lege cellen aan zodat lengte klopt
-                row = row + [""] * (len(headers) - len(row))
-        
-            item = {headers[i]: row[i] for i in range(len(headers))}
-            table_data.append(item)
-        
+        for r in rows:
+            r = r + [""] * (len(headers) - len(r))  # aanvullen indien nodig
+            table_data.append({headers[i]: r[i] for i in range(len(headers))})
+
         st.table(table_data)
 
         st.subheader("Status aanpassen")
 
-        # Google Sheets is 1-based → eerste melding staat op rij 2
+        # ===========================
+        # Correcte rijnummers + context
+        # ===========================
+
         sheet_rows = list(range(2, len(rows) + 2))
-        gekozen_rij = st.selectbox("Kies rijnummer (Google Sheet)", sheet_rows)
+
+        keuzes = []
+        for i, row in enumerate(rows):
+            naam = row[1]
+            oms = row[3][:30] + ("..." if len(row[3]) > 30 else "")
+            keuzes.append(f"{sheet_rows[i]} — {naam} — {oms}")
+
+        keuze_label = st.selectbox("Kies melding", keuzes)
+
+        gekozen_rij = int(keuze_label.split("—")[0].strip())
 
         nieuwe_status = st.selectbox("Nieuwe status", ["Open", "In behandeling", "Opgelost"])
 
         if st.button("Status bijwerken"):
             update_status(gekozen_rij, nieuwe_status)
-            st.success("Status bijgewerkt! Herlaad de pagina.")
-
-
-
+            st.success(f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw de pagina om het resultaat te zien.")
