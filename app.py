@@ -179,3 +179,4 @@ else:
         if st.button("Status bijwerken"):
             update_status(keuze, nieuwe)
             st.success("Status aangepast!")
+
