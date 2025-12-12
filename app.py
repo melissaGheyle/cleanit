@@ -6,38 +6,36 @@ import smtplib
 from email.mime.text import MIMEText
 import os
 
-# -----------------------------
-# GOOGLE SHEETS SETUP
-# -----------------------------
-
+# ---------------------------------------
+# GOOGLE SHEETS CONNECTIE
+# ---------------------------------------
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
 creds = Credentials.from_service_account_info(
-    st.secrets["gcp"],
-    scopes=SCOPE
+    st.secrets["gcp"], scopes=SCOPE
 )
 
 client = gspread.authorize(creds)
 
-SHEET_ID = "14zLgDSbj_bjuaPfLCyPg_7jJOVY_vfHHvpPsSzkSGZQ"
+SHEET_ID = "1k03IUszL8tp_RrSx3NBuZpBLdiM-MZugTKeeNgUzYqc"
 sheet = client.open_by_key(SHEET_ID).sheet1
 
-# -----------------------------
+# ---------------------------------------
 # UPLOAD FOLDER
-# -----------------------------
+# ---------------------------------------
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# -----------------------------
+# ---------------------------------------
 # E-MAIL INSTELLINGEN
-# -----------------------------
+# ---------------------------------------
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "melissagheyle@gmail.com"
-SMTP_PASS = "skay tvei plvo lkql"   # Gmail App Password
+SMTP_PASS = "skay tvei plvo lkql"
 
 MAIL_ONTVANGERS = [
     "melissagheyle@gmail.com",
@@ -45,7 +43,7 @@ MAIL_ONTVANGERS = [
 ]
 
 def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving):
-    onderwerp = "Nieuwe risico melding binnen Zorgpunt"
+    onderwerp = "Nieuwe risico melding bij Zorgpunt"
     html = f"""
     <h3>Nieuwe risico melding</h3>
     <p><b>Naam:</b> {naam}</p>
@@ -55,7 +53,6 @@ def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
     <p><b>Prioriteit:</b> {prioriteit}</p>
     <p><b>Omschrijving:</b> {omschrijving}</p>
     """
-
     msg = MIMEText(html, "html")
     msg["Subject"] = onderwerp
     msg["From"] = SMTP_USER
@@ -67,78 +64,73 @@ def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
             server.login(SMTP_USER, SMTP_PASS)
             server.sendmail(SMTP_USER, MAIL_ONTVANGERS, msg.as_string())
     except Exception as e:
-        st.error(f"Kon geen e-mail verzenden: {e}")
+        st.error(f"Fout bij verzenden van e-mail: {e}")
 
-
-# -----------------------------
-# GOOGLE SHEET FUNCTIONS
-# -----------------------------
+# ---------------------------------------
+# GOOGLE SHEETS FUNCTIES
+# ---------------------------------------
 
 def save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
+    row = [
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        naam,
+        locatie,
+        omschrijving,
+        type_melding,
+        categorie,
+        prioriteit,
+        fotopad,
+        "Open"
+    ]
     try:
-        row = [
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            naam,
-            locatie,
-            omschrijving,
-            type_melding,
-            categorie,
-            prioriteit,
-            fotopad,
-            "Open"
-        ]
         sheet.append_row(row)
         return True
     except Exception as e:
-        st.error(f"Kon melding niet opslaan in Google Sheets: {e}")
+        st.error(f"Kon niet opslaan in Google Sheets: {e}")
         return False
 
 
 def load_meldingen():
     rows = sheet.get_all_values()
-    return rows[1:]  # Skip header
+    return rows[1:]
 
 
-def update_status(row_index, nieuwe_status):
-    # row_index is 1-based (sheet), but our app displays 0-based
-    sheet.update_cell(row_index + 1, 9, nieuwe_status)  # kolom 9 = status
+def update_status(row_nr, nieuwe_status):
+    sheet.update_cell(row_nr + 2, 9, nieuwe_status)
 
+# ---------------------------------------
+# STREAMLIT UI
+# ---------------------------------------
 
-# -----------------------------
-# STREAMLIT INTERFACE
-# -----------------------------
-
-st.set_page_config(page_title="Zorgpunt Risico Meldingen", layout="wide")
+st.set_page_config(page_title="Zorgpunt risico meldingen", layout="wide")
 
 menu = ["Nieuwe melding", "Dashboard"]
 choice = st.sidebar.selectbox("Menu", menu)
 
-# -----------------------------
-# PAGINA: Nieuwe melding
-# -----------------------------
+# ---------------------------------------
+# NIEUWE MELDING
+# ---------------------------------------
 if choice == "Nieuwe melding":
 
-    st.title("Risico / Gevaar / Gebrek melden")
+    st.title("Nieuwe risico melding indienen")
 
-    naam = st.text_input("Naam medewerker *")
-    locatie = st.selectbox("Opvanglocatie *", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"])
-    omschrijving = st.text_area("Omschrijving *", height=150)
+    naam = st.text_input("Naam *")
+    locatie = st.selectbox("Locatie", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"])
+    omschrijving = st.text_area("Omschrijving *")
 
-    type_melding = st.selectbox("Type melding", ["Risico", "Gevaar", "Gebrek"])
-
+    type_melding = st.selectbox("Type", ["Risico", "Gevaar", "Gebrek"])
     categorie = st.selectbox("Categorie", [
         "Toezicht en handelingen", "Toegang", "Binnenruimtes", "Binnenklimaat",
-        "Buitenspelen", "Vervoer", "Slapen", "Verzorging", "Hygiëne",
-        "Vaccinaties", "Zieke kinderen en koorts", "Geneesmiddelen"
+        "Buitenspelen", "Vervoer", "Slapen", "Verzorging",
+        "Hygiëne", "Vaccinaties", "Zieke kinderen en koorts", "Geneesmiddelen"
     ])
-
     prioriteit = st.selectbox("Prioriteit", [
         "1 – Direct oplossen",
         "2 – Binnen de week",
         "3 – Binnen de maand"
     ])
 
-    foto = st.file_uploader("Upload optionele foto")
+    foto = st.file_uploader("Optionele foto")
     fotopad = ""
 
     if foto:
@@ -147,29 +139,28 @@ if choice == "Nieuwe melding":
             f.write(foto.getbuffer())
         fotopad = save_path
 
-    if st.button("Melding verzenden"):
-        if not naam or not omschrijving:
+    if st.button("Verzenden"):
+        if naam.strip() == "" or omschrijving.strip() == "":
             st.error("Naam en omschrijving zijn verplicht.")
         else:
             if save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
                 stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
-                st.success("Melding succesvol opgeslaan!")
+                st.success("Melding opgeslagen!")
                 st.balloons()
 
-# -----------------------------
-# PAGINA: Dashboard
-# -----------------------------
+# ---------------------------------------
+# DASHBOARD
+# ---------------------------------------
 else:
     st.title("Dashboard risico meldingen")
 
     rows = load_meldingen()
 
     if not rows:
-        st.warning("Nog geen meldingen.")
+        st.info("Nog geen meldingen.")
     else:
         st.dataframe(rows, use_container_width=True)
 
-        # Prioriteitentelling
         p1 = sum(1 for r in rows if r[6].startswith("1"))
         p2 = sum(1 for r in rows if r[6].startswith("2"))
         p3 = sum(1 for r in rows if r[6].startswith("3"))
@@ -179,14 +170,12 @@ else:
         st.metric("2 – Binnen de week", p2)
         st.metric("3 – Binnen de maand", p3)
 
-        # STATUS AANPASSEN
         st.subheader("Status aanpassen")
 
         indices = list(range(len(rows)))
-        melding_nummer = st.selectbox("Kies melding (rij-index)", indices)
-
-        nieuwe_status = st.selectbox("Nieuwe status", ["Open", "In behandeling", "Opgelost"])
+        keuze = st.selectbox("Welke melding?", indices)
+        nieuwe = st.selectbox("Nieuwe status", ["Open", "In behandeling", "Opgelost"])
 
         if st.button("Status bijwerken"):
-            update_status(melding_nummer, nieuwe_status)
-            st.success("Status bijgewerkt! Herlaad de pagina om het te zien.")
+            update_status(keuze, nieuwe)
+            st.success("Status aangepast!")
