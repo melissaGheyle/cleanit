@@ -3,4 +3,8 @@ pandas>=2.2.2,<3.0
 openpyxl>=3.1.5,<4.0
 numpy
 matplotlib
+gspread
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
 
