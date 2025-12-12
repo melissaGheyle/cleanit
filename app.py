@@ -1,12 +1,14 @@
 import streamlit as st
-import sqlite3
-import os
+import gspread
+from google.oauth2.service_account import Credentials
 from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
-import gspread
-from google.oauth2.service_account import Credentials
+import os
 
+# -----------------------------
+# GOOGLE SHEETS SETUP
+# -----------------------------
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -23,35 +25,27 @@ client = gspread.authorize(creds)
 SHEET_ID = "14zLgDSbj_bjuaPfLCyPg_7jJOVY_vfHHvpPsSzkSGZQ"
 sheet = client.open_by_key(SHEET_ID).sheet1
 
-# ======================================
-# BESTANDSLOCATIES — WERKT 100% OP STREAMLIT CLOUD
-# ======================================
-
-DB_PATH = "meldingen.db"        # database staat naast app.py
-UPLOAD_FOLDER = "uploads"       # map naast app.py
-
-# Map voor uploads aanmaken (dit mag wél)
+# -----------------------------
+# UPLOAD FOLDER
+# -----------------------------
+UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-
-# ======================================================
+# -----------------------------
 # E-MAIL INSTELLINGEN
-# ======================================================
-
+# -----------------------------
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "melissagheyle@gmail.com"        # <-- aan te passen
-SMTP_PASS = "skay tvei plvo lkql"         # <-- Gmail App Password
+SMTP_USER = "melissagheyle@gmail.com"
+SMTP_PASS = "skay tvei plvo lkql"   # Gmail App Password
 
 MAIL_ONTVANGERS = [
     "melissagheyle@gmail.com",
     "joris_asseloos@hotmail.com"
 ]
 
-
 def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving):
     onderwerp = "Nieuwe risico melding binnen Zorgpunt"
-
     html = f"""
     <h3>Nieuwe risico melding</h3>
     <p><b>Naam:</b> {naam}</p>
@@ -76,95 +70,55 @@ def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
         st.error(f"Kon geen e-mail verzenden: {e}")
 
 
-# ======================================================
-# DATABASE INITIALISATIE
-# ======================================================
-
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS meldingen (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT,
-            naam TEXT,
-            locatie TEXT,
-            omschrijving TEXT,
-            type TEXT,
-            categorie TEXT,
-            prioriteit TEXT,
-            fotopad TEXT,
-            status TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-init_db()
-
-
-# ======================================================
-# DATABASE FUNCTIES
-# ======================================================
+# -----------------------------
+# GOOGLE SHEET FUNCTIONS
+# -----------------------------
 
 def save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO meldingen 
-            (timestamp, naam, locatie, omschrijving, type, categorie, prioriteit, fotopad, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
+        row = [
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad, "Open"
-        ))
-        conn.commit()
-        conn.close()
+            naam,
+            locatie,
+            omschrijving,
+            type_melding,
+            categorie,
+            prioriteit,
+            fotopad,
+            "Open"
+        ]
+        sheet.append_row(row)
         return True
     except Exception as e:
-        st.error(f"Kon melding niet opslaan: {e}")
+        st.error(f"Kon melding niet opslaan in Google Sheets: {e}")
         return False
 
 
 def load_meldingen():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM meldingen ORDER BY id DESC")
-    rows = c.fetchall()
-    conn.close()
-    return rows
+    rows = sheet.get_all_values()
+    return rows[1:]  # Skip header
 
 
-def update_status(melding_id, nieuwe_status):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("UPDATE meldingen SET status = ? WHERE id = ?", (nieuwe_status, melding_id))
-    conn.commit()
-    conn.close()
+def update_status(row_index, nieuwe_status):
+    # row_index is 1-based (sheet), but our app displays 0-based
+    sheet.update_cell(row_index + 1, 9, nieuwe_status)  # kolom 9 = status
 
 
-# ======================================================
-# STREAMLIT APP
-# ======================================================
+# -----------------------------
+# STREAMLIT INTERFACE
+# -----------------------------
 
 st.set_page_config(page_title="Zorgpunt Risico Meldingen", layout="wide")
 
 menu = ["Nieuwe melding", "Dashboard"]
 choice = st.sidebar.selectbox("Menu", menu)
 
-
-# ======================================================
-# PAGINA 1 — MELDING INDIENEN
-# ======================================================
+# -----------------------------
+# PAGINA: Nieuwe melding
+# -----------------------------
 if choice == "Nieuwe melding":
 
     st.title("Risico / Gevaar / Gebrek melden")
-
-    st.info("""
-    U kan hier risico’s, gevaren of gebreken melden die u vaststelt in de opvang.  
-    Deze meldingen maken deel uit van de officiële risicoanalyse.
-    """)
 
     naam = st.text_input("Naam medewerker *")
     locatie = st.selectbox("Opvanglocatie *", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"])
@@ -173,18 +127,9 @@ if choice == "Nieuwe melding":
     type_melding = st.selectbox("Type melding", ["Risico", "Gevaar", "Gebrek"])
 
     categorie = st.selectbox("Categorie", [
-        "Toezicht en handelingen",
-        "Toegang",
-        "Binnenruimtes",
-        "Binnenklimaat",
-        "Buitenspelen",
-        "Vervoer",
-        "Slapen",
-        "Verzorging",
-        "Hygiëne",
-        "Vaccinaties",
-        "Zieke kinderen en koorts",
-        "Geneesmiddelen"
+        "Toezicht en handelingen", "Toegang", "Binnenruimtes", "Binnenklimaat",
+        "Buitenspelen", "Vervoer", "Slapen", "Verzorging", "Hygiëne",
+        "Vaccinaties", "Zieke kinderen en koorts", "Geneesmiddelen"
     ])
 
     prioriteit = st.selectbox("Prioriteit", [
@@ -208,13 +153,12 @@ if choice == "Nieuwe melding":
         else:
             if save_melding(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
                 stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
-                st.success("Melding succesvol opgeslagen!")
+                st.success("Melding succesvol opgeslaan!")
                 st.balloons()
 
-
-# ======================================================
-# PAGINA 2 — DASHBOARD
-# ======================================================
+# -----------------------------
+# PAGINA: Dashboard
+# -----------------------------
 else:
     st.title("Dashboard risico meldingen")
 
@@ -223,45 +167,26 @@ else:
     if not rows:
         st.warning("Nog geen meldingen.")
     else:
-        kolommen = [
-            "ID", "Tijdstip", "Naam", "Locatie", "Omschrijving",
-            "Type", "Categorie", "Prioriteit", "Foto", "Status"
-        ]
+        st.dataframe(rows, use_container_width=True)
 
-        data = [list(row) for row in rows]
-        st.dataframe(data, use_container_width=True)
+        # Prioriteitentelling
+        p1 = sum(1 for r in rows if r[6].startswith("1"))
+        p2 = sum(1 for r in rows if r[6].startswith("2"))
+        p3 = sum(1 for r in rows if r[6].startswith("3"))
 
-        # PRIORITEIT OVERZICHT
         st.subheader("Prioriteiten")
+        st.metric("1 – Direct oplossen", p1)
+        st.metric("2 – Binnen de week", p2)
+        st.metric("3 – Binnen de maand", p3)
 
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("""
-            SELECT 
-                SUM(CASE WHEN prioriteit LIKE '1%' THEN 1 ELSE 0 END),
-                SUM(CASE WHEN prioriteit LIKE '2%' THEN 1 ELSE 0 END),
-                SUM(CASE WHEN prioriteit LIKE '3%' THEN 1 ELSE 0 END)
-            FROM meldingen
-        """)
-        p1, p2, p3 = c.fetchone()
-        conn.close()
-
-        st.metric("1 – Direct oplossen", p1 or 0)
-        st.metric("2 – Binnen de week", p2 or 0)
-        st.metric("3 – Binnen de maand", p3 or 0)
-
-        # STATUS WIJZIGEN
+        # STATUS AANPASSEN
         st.subheader("Status aanpassen")
 
-        ids = [r[0] for r in rows]
-        geselecteerd_id = st.selectbox("Kies melding ID", ids)
+        indices = list(range(len(rows)))
+        melding_nummer = st.selectbox("Kies melding (rij-index)", indices)
 
         nieuwe_status = st.selectbox("Nieuwe status", ["Open", "In behandeling", "Opgelost"])
 
         if st.button("Status bijwerken"):
-            update_status(geselecteerd_id, nieuwe_status)
-            st.success("Status bijgewerkt! Herlaad de pagina om te zien.")
-
-
-
-
+            update_status(melding_nummer, nieuwe_status)
+            st.success("Status bijgewerkt! Herlaad de pagina om het te zien.")
