@@ -362,7 +362,7 @@ def run_open_module(questions, module_name, finish_flag):
 
     if st.button("Controleer", key=f"btn_open_{module_name}_{i}"):
 
-        ok, hit_count, sample_hits = open_answer_ok(ans, model, min_hits=2)
+        ok, hit_count, sample_hits = open_answer_ok(ans, model, min_hits=1)
 
         st.session_state.answers.append({
             "vraag": vraag,
@@ -383,7 +383,7 @@ def run_open_module(questions, module_name, finish_flag):
             )
         else:
             msg = "Nog niet helemaal. (te weinig kernwoorden uit modelantwoord)"
-            hits_txt = f"Kernwoorden herkend: **{hit_count}** (minstens 2 nodig)"
+            hits_txt = f"Kernwoorden herkend: **{hit_count}** (minstens 1 nodig)"
             store_feedback(
                 "error",
                 msg,
@@ -457,6 +457,7 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
 
 
 
