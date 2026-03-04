@@ -208,7 +208,7 @@ vragen_A = [
 
 vragen_B = [
      ("Welke risico’s zijn er in opvang, waar vind ik de procedure?",
-     "Risico-analyse in rode map.")
+     "Risico-analyse in rode map."),
     ("Dagelijkse zorg – hoe doe jij dit?",
      "Rust, nabijheid en veilige verzorging. Tegemoet komen aan de noden van elk kind"),
     ("Oudercommunicatie – hoe doe jij dit?",
@@ -405,6 +405,7 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
 
 
 
