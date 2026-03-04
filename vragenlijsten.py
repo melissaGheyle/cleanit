@@ -120,6 +120,14 @@ def open_answer_ok(ans: str, model: str, min_hits: int = 2):
     hits = ans_set.intersection(model_set)
     return (len(hits) >= min_hits, len(hits), sorted(list(hits))[:8])  # max 8 tonen
 
+def show_score():
+    perc = round(st.session_state.score / st.session_state.max_score * 100) if st.session_state.max_score else 0
+
+    st.sidebar.markdown("### 📊 Jouw score")
+    st.sidebar.write(f"{st.session_state.score} / {st.session_state.max_score}")
+    st.sidebar.progress(perc / 100)
+    st.sidebar.caption(f"{perc}%")
+
 # =============================================================
 # VRAGEN
 # =============================================================
@@ -273,6 +281,7 @@ st.session_state.max_score = len(pikler_mc) + len(pikler_open) + len(vragen_A) +
 # =============================================================
 
 def run_mc_module(questions, module_name, next_step_function):
+    show_score()
     i = st.session_state.idx
 
     if i >= len(questions):
@@ -321,6 +330,7 @@ def run_mc_module(questions, module_name, next_step_function):
 
 
 def run_open_module(questions, module_name, finish_flag):
+    show_score()
     i = st.session_state.idx
 
     if i >= len(questions):
@@ -447,3 +457,4 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
