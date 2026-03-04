@@ -207,27 +207,27 @@ vragen_A = [
 ]
 
 vragen_B = [
-("Dagelijkse zorg – hoe doe jij dit?",
-"Rust en veilige verzorging."),
-("Ontwikkelingsstimulering – hoe doe jij dit?",
-"Door passend materiaal en spel."),
-("Oudercommunicatie – hoe doe jij dit?",
-"Warm en open communiceren."),
-("Een ouder heeft een klacht. Hoe ga je ermee om?",
-"Luisteren en melden."),
-("Wat is klachtenprocedure?",
-"Ontvangst – onderzoek – terugkoppeling."),
-("Wat is grensoverschrijdend gedrag?",
-"Fysiek of verbaal geweld."),
-("Crisisprocedures – stappen?",
-"Alarmeren – hulpdiensten – communicatie."),
-("Hoe zijn leefgroepen ingedeeld?",
-"Baby's verzorging, peuters structuur."),
-("Hoe doe je toezicht op rustruimtes?",
-"Elke 10–15 minuten controleren."),
-("Welke risico’s zijn er in opvang?",
-"Risicoanalyse.")
+     ("Welke risico’s zijn er in opvang, waar vind ik de procedure?",
+     "Risico-analyse in rode map.")
+    ("Dagelijkse zorg – hoe doe jij dit?",
+     "Rust, nabijheid en veilige verzorging. Tegemoet komen aan de noden van elk kind"),
+    ("Oudercommunicatie – hoe doe jij dit?",
+     "Warm, eerlijk en open communiceren. Via dagelijkse gesprekken, Ziko-vo's en dagverslagen"),
+    ("Een ouder heeft een klacht. Hoe ga je ermee om?",
+     "Luisteren, erkennen, melden aan de verantwoordelijke en organisator, noteren in de klachtenmap en terugkoppelen naar de ouders."),
+    ("Wat is klachtenprocedure?",
+     "1) Ontvangst 2) Onderzoek 3) Terugkoppeling"),
+    ("Wat is grensoverschrijdend gedrag?",
+     "Fysiek of verbaal geweld, negeren, vernederen."),
+    ("Crisisprocedures – stappen?",
+     "1) Alarmeren 2) bellen (hulpdiensten) 3) communicatie"),
+    ("Hoe zijn leefgroepen ingedeeld?",
+     "Baby's → verzorging; peuters → taal & structuur."),
+    ("Hoe doe je toezicht op rustruimtes?",
+     "Elke 10–15 min fysieke controle."),
+   
 ]
+
 
 # =============================================================
 # SESSION STATE
@@ -405,6 +405,7 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
 
 
 
