@@ -13,13 +13,11 @@ def generate_code():
     return "ZORG-" + "".join(random.choices(string.ascii_uppercase, k=4)) + "-" + "".join(random.choices(string.digits, k=5))
 
 def cert_html(name, score, max_score):
-
     today = datetime.date.today().strftime("%d/%m/%Y")
-    perc = round(score / max_score * 100)
+    perc = round(score / max_score * 100) if max_score else 0
     status = "GESLAAGD" if perc >= 70 else "VOLTOOID (niet geslaagd)"
 
     antwoorden_html = ""
-
     for a in st.session_state.answers:
         antwoorden_html += f"""
         <p>
@@ -78,8 +76,14 @@ def show_feedback():
     st.info(fb_expl)
     st.session_state.last_fb = None
 
-def point_if_filled(text):
-    return 1 if text.strip() != "" else 0
+def reset_checks():
+    st.session_state.last_fb = None
+
+    st.session_state.checked_open = False
+    st.session_state.checked_open_idx = None
+
+    st.session_state.checked_mc = False
+    st.session_state.checked_mc_idx = None
 
 
 # =============================================================
@@ -119,25 +123,14 @@ pikler_open = [
 ]
 
 vragen_A = [
-
-
-# -------------------------------------------------
-# WELBEVINDEN
-# -------------------------------------------------
-
 ("Wat betekent welbevinden bij een kind?",
 "Welbevinden betekent dat een kind zich veilig, ontspannen en goed voelt in de opvang. Dit kan je zien aan gezichtsuitdrukking, spontaniteit, energie en open lichaamshouding."),
 
 ("Welke signalen tonen hoog welbevinden bij een kind?",
-"Een ontspannen houding, lachen, spontaan spelen, open contact met anderen en een gevoel van veiligheid.tijd vergeten, geen aandacht voor de omgeving."),
+"Een ontspannen houding, lachen, spontaan spelen, open contact met anderen en een gevoel van veiligheid."),
 
 ("Wat kan een begeleider doen wanneer het welbevinden van een kind laag is?",
 "Observeren wat het kind nodig heeft, extra aandacht geven, veiligheid creëren en eventueel overleggen met collega's of ouders."),
-
-
-# -------------------------------------------------
-# BETROKKENHEID
-# -------------------------------------------------
 
 ("Wat betekent betrokkenheid bij een kind?",
 "Betrokkenheid betekent dat een kind intens geconcentreerd bezig is met een activiteit of spel."),
@@ -148,11 +141,6 @@ vragen_A = [
 ("Wat kan je doen wanneer de betrokkenheid van een kind laag is?",
 "Aansluiten bij de interesses van het kind, uitdagend materiaal aanbieden en het spelaanbod aanpassen."),
 
-
-# -------------------------------------------------
-# EMOTIONELE ONDERSTEUNING
-# -------------------------------------------------
-
 ("Wat betekent emotionele ondersteuning in de kinderopvang?",
 "Kinderen veiligheid en vertrouwen geven door warme interacties, nabijheid en aandacht."),
 
@@ -162,24 +150,14 @@ vragen_A = [
 ("Waarom is een veilige relatie tussen kind en begeleider belangrijk?",
 "Een veilige relatie helpt kinderen zich veilig te voelen en ondersteunt hun emotionele en sociale ontwikkeling."),
 
-
-# -------------------------------------------------
-# EDUCATIEVE ONDERSTEUNING
-# -------------------------------------------------
-
 ("Wat betekent educatieve ondersteuning in de kinderopvang?",
-"Kinderen ondersteunen in hun ontwikkeling door spel, activiteiten en interactie.Taalstimulering."),
+"Kinderen ondersteunen in hun ontwikkeling door spel, activiteiten en interactie, inclusief taalstimulering."),
 
 ("Hoe kan een begeleider de ontwikkeling van kinderen stimuleren?",
-"Door uitdagend spelmateriaal, activiteiten, vrij spel en interactie met kinderen.praten met de kinderen, vertellen wat je doet."),
+"Door uitdagend spelmateriaal, activiteiten, vrij spel en interactie: praten met de kinderen en verwoorden wat je doet."),
 
 ("Waarom is taalstimulering belangrijk bij baby's en peuters?",
 "Taalstimulering helpt kinderen om te communiceren, relaties op te bouwen en zich cognitief te ontwikkelen."),
-
-
-# -------------------------------------------------
-# OMGEVING
-# -------------------------------------------------
 
 ("Waarom is een veilige omgeving belangrijk in de kinderopvang?",
 "Een veilige omgeving zorgt ervoor dat kinderen zonder risico's kunnen spelen en ontdekken."),
@@ -190,11 +168,6 @@ vragen_A = [
 ("Hoe kan de inrichting van een ruimte het spel van kinderen stimuleren?",
 "Door verschillende speelhoeken, toegankelijk materiaal en een overzichtelijke en rustige inrichting."),
 
-
-# -------------------------------------------------
-# GEZINNEN EN DIVERSITEIT
-# -------------------------------------------------
-
 ("Waarom is samenwerking met ouders belangrijk in de kinderopvang?",
 "Ouders kennen hun kind het best en samenwerking helpt om beter in te spelen op de behoeften van het kind."),
 
@@ -203,7 +176,6 @@ vragen_A = [
 
 ("Wat betekent respect voor diversiteit in de kinderopvang?",
 "Rekening houden met verschillende culturen, talen, achtergronden en waarden van gezinnen.")
-
 ]
 
 vragen_B = [
@@ -214,20 +186,19 @@ vragen_B = [
     ("Wat is grensoverschrijdend gedrag?",
      "Fysiek of verbaal geweld, negeren, vernederen, schending van de integriteit. Dit gedrag kan van begeleider naar kind, van ouder naar kind, ouder naar begeleider, begeleiders onderling"),
     ("Hoe doe je toezicht op rustruimtes?",
-     "Elke 10–15 min fysieke controle in de slaapruimtes. aftekenen op de lijst die aan de deur hangt. camera's voor extra toezicht "),
+     "Elke 10–15 min fysieke controle in de slaapruimtes. Aftekenen op de lijst die aan de deur hangt. Camera's voor extra toezicht."),
     ("Oudercommunicatie – hoe doe jij dit?",
-     "Warm, eerlijk en open communiceren. Via dagelijkse gesprekken, Ziko-vo's en dagverslagen"),
+     "Warm, eerlijk en open communiceren. Via dagelijkse gesprekken, ZIKO-VO's en dagverslagen."),
     ("Wat is klachtenprocedure?",
      "1) Ontvangst 2) Onderzoek 3) Terugkoppeling"),
     ("Een ouder heeft een klacht. Hoe ga je ermee om?",
-     "Luisteren, erkennen, melden aan de verantwoordelijke en organisator, noteren in de klachtenmap en terugkoppelen naar de ouders."),  
+     "Luisteren, erkennen, melden aan de verantwoordelijke en organisator, noteren in de klachtenmap en terugkoppelen naar de ouders."),
     ("Hoe zijn leefgroepen ingedeeld?",
-     "we werken in verschillende groepen op basis van de leeftijd en ontwikkeling van de kinderen, verticale groepen. Per groep maximum 18 kinderen, in sommige groepen heb je minder kinderen want minimum 3m2 speeloppervlak per kind"),
+     "We werken in verschillende groepen op basis van de leeftijd en ontwikkeling van de kinderen (verticale groepen). Per groep maximum 18 kinderen. Minimum 3 m² speeloppervlak per kind."),
     ("Hoeveel kinderbegeleiders moeten volgens de regelgeving voorzien worden per aantal kinderen en in welke situaties kan hiervan tijdelijk afgeweken worden?",
      "Volgens de regelgeving in Vlaanderen moet er in de kinderopvang in principe één kinderbegeleider voorzien worden per maximaal acht kinderen. Wanneer er minstens twee kinderbegeleiders aanwezig zijn in een leefgroep, mag de verhouding gemiddeld één kinderbegeleider per negen kinderen zijn. In bepaalde situaties, zoals tijdens middagpauzes of rustmomenten, kan tijdelijk een hogere ratio worden toegepast. In dat geval mag één kinderbegeleider maximaal veertien kinderen begeleiden, en dit voor maximaal twee uur per dag."),
     ("Wat betekent draagkracht voor jou als kinderbegeleider, wanneer merk je dat je draagkracht lager wordt en wat doe je op zo’n moment?",
-    "Draagkracht is voor mij de energie en ruimte die ik heb om kinderen goed te begeleiden. Wanneer het erg druk is of ik moe ben, merk ik dat mijn draagkracht lager wordt. Dan probeer ik rustig te blijven, hulp te vragen aan collega’s of even een moment te nemen om opnieuw overzicht te krijgen."),
-   
+     "Draagkracht is voor mij de energie en ruimte die ik heb om kinderen goed te begeleiden. Wanneer het erg druk is of ik moe ben, merk ik dat mijn draagkracht lager wordt. Dan probeer ik rustig te blijven, hulp te vragen aan collega’s of even een moment te nemen om opnieuw overzicht te krijgen."),
 ]
 
 
@@ -256,20 +227,35 @@ if "done_m2" not in st.session_state:
 if "done_m3" not in st.session_state:
     st.session_state.done_m3 = False
 
+# Feedback + flow flags (fix voor “modelantwoord vorige vraag”)
+if "last_fb" not in st.session_state:
+    st.session_state.last_fb = None
+
+if "checked_open" not in st.session_state:
+    st.session_state.checked_open = False
+
+if "checked_open_idx" not in st.session_state:
+    st.session_state.checked_open_idx = None
+
+if "checked_mc" not in st.session_state:
+    st.session_state.checked_mc = False
+
+if "checked_mc_idx" not in st.session_state:
+    st.session_state.checked_mc_idx = None
+
 st.session_state.max_score = len(pikler_mc) + len(pikler_open) + len(vragen_A) + len(vragen_B)
 
 # =============================================================
-# MODULE RUNNERS
+# MODULE RUNNERS (AANGEPAST: 2-stappen flow)
 # =============================================================
 
 def run_mc_module(questions, module_name, next_step_function):
-    show_feedback()
-
     i = st.session_state.idx
 
+    # Einde module
     if i >= len(questions):
         st.session_state.idx = 0
-        st.session_state.last_fb = None
+        reset_checks()
         next_step_function()
         st.rerun()
 
@@ -280,6 +266,19 @@ def run_mc_module(questions, module_name, next_step_function):
 
     keuze = st.radio("Kies:", opties, key=f"radio_{module_name}_{i}")
 
+    # Als we net gecontroleerd hebben op deze vraag: toon feedback + Volgende knop
+    if st.session_state.checked_mc and st.session_state.checked_mc_idx == i:
+        show_feedback()
+
+        if st.button("Volgende vraag ➡️", key=f"btn_next_mc_{module_name}_{i}"):
+            st.session_state.checked_mc = False
+            st.session_state.checked_mc_idx = None
+            st.session_state.idx += 1
+            st.rerun()
+
+        return
+
+    # Anders: Controleer
     if st.button("Controleer", key=f"btn_mc_{module_name}_{i}"):
 
         st.session_state.answers.append({
@@ -294,19 +293,20 @@ def run_mc_module(questions, module_name, next_step_function):
         else:
             store_feedback("error", f"Fout. Juiste antwoord is: {juist}", uitleg)
 
-        st.session_state.idx += 1
+        # NIET idx verhogen; eerst feedback tonen op dezelfde vraag
+        st.session_state.checked_mc = True
+        st.session_state.checked_mc_idx = i
         st.rerun()
 
 
 def run_open_module(questions, module_name, finish_flag):
-    show_feedback()
-
     i = st.session_state.idx
 
+    # Einde module
     if i >= len(questions):
         st.session_state.idx = 0
         st.session_state[finish_flag] = True
-        st.session_state.last_fb = None
+        reset_checks()
         st.session_state.page = "home"
         st.rerun()
 
@@ -317,6 +317,19 @@ def run_open_module(questions, module_name, finish_flag):
 
     ans = st.text_area("Jouw antwoord:", key=f"txt_{module_name}_{i}")
 
+    # Als we net gecontroleerd hebben op deze vraag: toon feedback + Volgende knop
+    if st.session_state.checked_open and st.session_state.checked_open_idx == i:
+        show_feedback()
+
+        if st.button("Volgende vraag ➡️", key=f"btn_next_open_{module_name}_{i}"):
+            st.session_state.checked_open = False
+            st.session_state.checked_open_idx = None
+            st.session_state.idx += 1
+            st.rerun()
+
+        return
+
+    # Anders: Controleer
     if st.button("Controleer", key=f"btn_open_{module_name}_{i}"):
 
         st.session_state.answers.append({
@@ -330,8 +343,11 @@ def run_open_module(questions, module_name, finish_flag):
 
         store_feedback("success", "Modelantwoord:", model)
 
-        st.session_state.idx += 1
+        # NIET idx verhogen; eerst feedback tonen op dezelfde vraag
+        st.session_state.checked_open = True
+        st.session_state.checked_open_idx = i
         st.rerun()
+
 
 # =============================================================
 # PAGE ROUTING
@@ -347,14 +363,20 @@ if st.session_state.page == "home":
     if st.button("➡️ Module 1: Emmi Pikler"):
         st.session_state.page = "m1_mc"
         st.session_state.idx = 0
+        reset_checks()
+        st.rerun()
 
     if st.button("➡️ Module 2: Vragenlijst MEMOQ", disabled=not st.session_state.done_m1):
         st.session_state.page = "m2"
         st.session_state.idx = 0
+        reset_checks()
+        st.rerun()
 
     if st.button("➡️ Module 3: Vragenlijst MIJN OPVANG", disabled=not st.session_state.done_m1):
         st.session_state.page = "m3"
         st.session_state.idx = 0
+        reset_checks()
+        st.rerun()
 
     if st.session_state.done_m1 and st.session_state.done_m2 and st.session_state.done_m3:
 
@@ -372,7 +394,6 @@ if st.session_state.page == "home":
                 "text/html"
             )
 
-
 elif st.session_state.page == "m1_mc":
 
     run_mc_module(
@@ -380,7 +401,6 @@ elif st.session_state.page == "m1_mc":
         "Module 1 – Emmi Pikler",
         next_step_function=lambda: setattr(st.session_state, "page", "m1_open")
     )
-
 
 elif st.session_state.page == "m1_open":
 
@@ -390,7 +410,6 @@ elif st.session_state.page == "m1_open":
         finish_flag="done_m1"
     )
 
-
 elif st.session_state.page == "m2":
 
     run_open_module(
@@ -399,7 +418,6 @@ elif st.session_state.page == "m2":
         "done_m2"
     )
 
-
 elif st.session_state.page == "m3":
 
     run_open_module(
@@ -407,12 +425,3 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
-
-
-
-
-
-
-
-
-
