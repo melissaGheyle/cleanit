@@ -119,22 +119,91 @@ pikler_open = [
 ]
 
 vragen_A = [
-("Wat is welbevinden en betrokkenheid? Wat doe je als deze laag is?",
-"Welbevinden = hoe goed het kind zich voelt. Signalen van welbevinden kan je zien aan de gezichtsuitdrukkingen, spontaniteit, openheid, energie, lichaamshouding,...; betrokkenheid = hoe diep het speelt."),
-("Wat is educatieve ondersteuning?",
-"Stimuleren van de ontwikkeling, observeren, aansluiten bij noden."),
-("Wat is jouw draagkracht? Wat doe je als die minder wordt?",
-"Draagkracht is de maximale stress die iemand kan dragen. Steun zoeken en grenzen stellen."),
-("Hoe zijn de leefgroepen ingedeeld?",
-"Baby's → verzorging; peuters → structuur."),
-("Hoe doe jij toezicht op rustruimtes?",
-"Regelmatig controleren en rust bewaken."),
-("Hoe bevorder je contact met ouders?",
-"Warme overdrachten en open communicatie."),
-("Welke risico’s zijn er in de opvang?",
-"Valgevaar, ziekte, ontsnappen."),
-("Waar registreer jij je uren? Wat is ratio?",
-"Aanwezigheidsblad/digitaal.")
+
+
+# -------------------------------------------------
+# WELBEVINDEN
+# -------------------------------------------------
+
+("Wat betekent welbevinden bij een kind?",
+"Welbevinden betekent dat een kind zich veilig, ontspannen en goed voelt in de opvang. Dit kan je zien aan gezichtsuitdrukking, spontaniteit, energie en lichaamshouding."),
+
+("Welke signalen tonen hoog welbevinden bij een kind?",
+"Een ontspannen houding, lachen, spontaan spelen, open contact met anderen en een gevoel van veiligheid."),
+
+("Wat kan een begeleider doen wanneer het welbevinden van een kind laag is?",
+"Observeren wat het kind nodig heeft, extra aandacht geven, veiligheid creëren en eventueel overleggen met collega's of ouders."),
+
+
+# -------------------------------------------------
+# BETROKKENHEID
+# -------------------------------------------------
+
+("Wat betekent betrokkenheid bij een kind?",
+"Betrokkenheid betekent dat een kind intens geconcentreerd bezig is met een activiteit of spel."),
+
+("Welke signalen tonen hoge betrokkenheid bij een kind?",
+"Energie, concentratie, doorzettingsvermogen, creativiteit en enthousiasme tijdens het spelen."),
+
+("Wat kan je doen wanneer de betrokkenheid van een kind laag is?",
+"Aansluiten bij de interesses van het kind, uitdagend materiaal aanbieden en het spelaanbod aanpassen."),
+
+
+# -------------------------------------------------
+# EMOTIONELE ONDERSTEUNING
+# -------------------------------------------------
+
+("Wat betekent emotionele ondersteuning in de kinderopvang?",
+"Kinderen veiligheid en vertrouwen geven door warme interacties, nabijheid en aandacht."),
+
+("Hoe kan een begeleider emotionele ondersteuning bieden aan kinderen?",
+"Door oogcontact, luisteren, geruststellen, reageren op signalen van het kind en een warme relatie op te bouwen."),
+
+("Waarom is een veilige relatie tussen kind en begeleider belangrijk?",
+"Een veilige relatie helpt kinderen zich veilig te voelen en ondersteunt hun emotionele en sociale ontwikkeling."),
+
+
+# -------------------------------------------------
+# EDUCATIEVE ONDERSTEUNING
+# -------------------------------------------------
+
+("Wat betekent educatieve ondersteuning in de kinderopvang?",
+"Kinderen ondersteunen in hun ontwikkeling door spel, activiteiten en interactie."),
+
+("Hoe kan een begeleider de ontwikkeling van kinderen stimuleren?",
+"Door uitdagend spelmateriaal, activiteiten, vrij spel en interactie met kinderen."),
+
+("Waarom is taalstimulering belangrijk bij baby's en peuters?",
+"Taalstimulering helpt kinderen om te communiceren, relaties op te bouwen en zich cognitief te ontwikkelen."),
+
+
+# -------------------------------------------------
+# OMGEVING
+# -------------------------------------------------
+
+("Waarom is een veilige omgeving belangrijk in de kinderopvang?",
+"Een veilige omgeving zorgt ervoor dat kinderen zonder risico's kunnen spelen en ontdekken."),
+
+("Wat zijn kenmerken van een stimulerende speelomgeving?",
+"Voldoende spelmateriaal, duidelijke speelhoeken, veiligheid en materialen aangepast aan de leeftijd."),
+
+("Hoe kan de inrichting van een ruimte het spel van kinderen stimuleren?",
+"Door verschillende speelhoeken, toegankelijk materiaal en een overzichtelijke en rustige inrichting."),
+
+
+# -------------------------------------------------
+# GEZINNEN EN DIVERSITEIT
+# -------------------------------------------------
+
+("Waarom is samenwerking met ouders belangrijk in de kinderopvang?",
+"Ouders kennen hun kind het best en samenwerking helpt om beter in te spelen op de behoeften van het kind."),
+
+("Hoe kan een begeleider een goede relatie met ouders opbouwen?",
+"Door open communicatie, respect, dagelijkse overdrachten en luisteren naar ouders."),
+
+("Wat betekent respect voor diversiteit in de kinderopvang?",
+"Rekening houden met verschillende culturen, talen, achtergronden en waarden van gezinnen.")
+
 ]
 
 vragen_B = [
@@ -336,3 +405,4 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst B",
         "done_m3"
     )
+
