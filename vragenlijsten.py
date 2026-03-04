@@ -2,6 +2,7 @@ import streamlit as st
 import datetime
 import random
 import string
+import re
 
 st.set_page_config(page_title="Zorgpunt Vragenlijsten", layout="centered")
 
@@ -85,6 +86,39 @@ def reset_checks():
     st.session_state.checked_mc = False
     st.session_state.checked_mc_idx = None
 
+def show_progress(module_label: str, i: int, total: int):
+    """Progress binnen een module + algemene voortgang."""
+    # Module progress
+    frac = (i + 1) / total if total else 1.0
+    st.progress(frac)
+    st.caption(f"**Voortgang {module_label}:** vraag {i+1} van {total}")
+
+    # Overall progress (op basis van aantal beantwoorde vragen)
+    overall_total = st.session_state.max_score
+    overall_done = len(st.session_state.answers)
+    overall_frac = min(overall_done / overall_total, 1.0) if overall_total else 1.0
+    st.caption(f"**Totale voortgang:** {overall_done} / {overall_total}")
+    st.progress(overall_frac)
+
+# --- Open-vraag scoring op basis van overlap met model (>= 2 kernwoorden) ---
+DUTCH_STOPWORDS = {
+    "de","het","een","en","of","maar","want","dat","die","dit","dan","dus","ook","nog",
+    "als","bij","met","voor","van","in","op","aan","naar","om","te","tot","uit","door",
+    "zijn","is","was","waren","wordt","worden","word","heb","hebt","heeft","hebben",
+    "ik","jij","je","u","hij","zij","wij","we","jullie","hun","ons","mijn","jouw","uw",
+    "er","hier","daar","waar","wat","hoe","wanneer","welke","welk"
+}
+
+def tokenize(text: str):
+    words = re.findall(r"\b[\w'-]+\b", text.lower())
+    # filter: geen stopwords, geen heel korte woorden
+    return {w for w in words if len(w) >= 3 and w not in DUTCH_STOPWORDS}
+
+def open_answer_ok(ans: str, model: str, min_hits: int = 2):
+    ans_set = tokenize(ans)
+    model_set = tokenize(model)
+    hits = ans_set.intersection(model_set)
+    return (len(hits) >= min_hits, len(hits), sorted(list(hits))[:8])  # max 8 tonen
 
 # =============================================================
 # VRAGEN
@@ -201,63 +235,54 @@ vragen_B = [
      "Draagkracht is voor mij de energie en ruimte die ik heb om kinderen goed te begeleiden. Wanneer het erg druk is of ik moe ben, merk ik dat mijn draagkracht lager wordt. Dan probeer ik rustig te blijven, hulp te vragen aan collega’s of even een moment te nemen om opnieuw overzicht te krijgen."),
 ]
 
-
 # =============================================================
 # SESSION STATE
 # =============================================================
 
 if "page" not in st.session_state:
     st.session_state.page = "home"
-
 if "score" not in st.session_state:
     st.session_state.score = 0
-
 if "idx" not in st.session_state:
     st.session_state.idx = 0
-
 if "answers" not in st.session_state:
     st.session_state.answers = []
-
 if "done_m1" not in st.session_state:
     st.session_state.done_m1 = False
-
 if "done_m2" not in st.session_state:
     st.session_state.done_m2 = False
-
 if "done_m3" not in st.session_state:
     st.session_state.done_m3 = False
 
-# Feedback + flow flags (fix voor “modelantwoord vorige vraag”)
+# Feedback + flow flags
 if "last_fb" not in st.session_state:
     st.session_state.last_fb = None
-
 if "checked_open" not in st.session_state:
     st.session_state.checked_open = False
-
 if "checked_open_idx" not in st.session_state:
     st.session_state.checked_open_idx = None
-
 if "checked_mc" not in st.session_state:
     st.session_state.checked_mc = False
-
 if "checked_mc_idx" not in st.session_state:
     st.session_state.checked_mc_idx = None
 
 st.session_state.max_score = len(pikler_mc) + len(pikler_open) + len(vragen_A) + len(vragen_B)
 
 # =============================================================
-# MODULE RUNNERS (AANGEPAST: 2-stappen flow)
+# MODULE RUNNERS (2-stappen flow + progress + open scoring)
 # =============================================================
 
 def run_mc_module(questions, module_name, next_step_function):
     i = st.session_state.idx
 
-    # Einde module
     if i >= len(questions):
         st.session_state.idx = 0
         reset_checks()
         next_step_function()
         st.rerun()
+
+    # progress
+    show_progress(module_name, i, len(questions))
 
     vraag, opties, juist, uitleg = questions[i]
 
@@ -266,7 +291,6 @@ def run_mc_module(questions, module_name, next_step_function):
 
     keuze = st.radio("Kies:", opties, key=f"radio_{module_name}_{i}")
 
-    # Als we net gecontroleerd hebben op deze vraag: toon feedback + Volgende knop
     if st.session_state.checked_mc and st.session_state.checked_mc_idx == i:
         show_feedback()
 
@@ -275,10 +299,8 @@ def run_mc_module(questions, module_name, next_step_function):
             st.session_state.checked_mc_idx = None
             st.session_state.idx += 1
             st.rerun()
-
         return
 
-    # Anders: Controleer
     if st.button("Controleer", key=f"btn_mc_{module_name}_{i}"):
 
         st.session_state.answers.append({
@@ -293,7 +315,6 @@ def run_mc_module(questions, module_name, next_step_function):
         else:
             store_feedback("error", f"Fout. Juiste antwoord is: {juist}", uitleg)
 
-        # NIET idx verhogen; eerst feedback tonen op dezelfde vraag
         st.session_state.checked_mc = True
         st.session_state.checked_mc_idx = i
         st.rerun()
@@ -302,13 +323,15 @@ def run_mc_module(questions, module_name, next_step_function):
 def run_open_module(questions, module_name, finish_flag):
     i = st.session_state.idx
 
-    # Einde module
     if i >= len(questions):
         st.session_state.idx = 0
         st.session_state[finish_flag] = True
         reset_checks()
         st.session_state.page = "home"
         st.rerun()
+
+    # progress
+    show_progress(module_name, i, len(questions))
 
     vraag, model = questions[i]
 
@@ -317,7 +340,6 @@ def run_open_module(questions, module_name, finish_flag):
 
     ans = st.text_area("Jouw antwoord:", key=f"txt_{module_name}_{i}")
 
-    # Als we net gecontroleerd hebben op deze vraag: toon feedback + Volgende knop
     if st.session_state.checked_open and st.session_state.checked_open_idx == i:
         show_feedback()
 
@@ -326,11 +348,11 @@ def run_open_module(questions, module_name, finish_flag):
             st.session_state.checked_open_idx = None
             st.session_state.idx += 1
             st.rerun()
-
         return
 
-    # Anders: Controleer
     if st.button("Controleer", key=f"btn_open_{module_name}_{i}"):
+
+        ok, hit_count, sample_hits = open_answer_ok(ans, model, min_hits=2)
 
         st.session_state.answers.append({
             "vraag": vraag,
@@ -338,23 +360,35 @@ def run_open_module(questions, module_name, finish_flag):
             "correct": model
         })
 
-        if ans.strip() != "":
+        if ok:
             st.session_state.score += 1
+            msg = "Goed! (voldoende overeenkomst met modelantwoord)"
+            hits_txt = f"Kernwoorden herkend: **{hit_count}**"
+            if sample_hits:
+                hits_txt += f" (bv. {', '.join(sample_hits)})"
+            store_feedback(
+                "success",
+                msg,
+                f"{hits_txt}\n\n**Modelantwoord:**\n\n{model}"
+            )
+        else:
+            msg = "Nog niet helemaal. (te weinig kernwoorden uit modelantwoord)"
+            hits_txt = f"Kernwoorden herkend: **{hit_count}** (minstens 2 nodig)"
+            store_feedback(
+                "error",
+                msg,
+                f"{hits_txt}\n\n**Modelantwoord:**\n\n{model}"
+            )
 
-        store_feedback("success", "Modelantwoord:", model)
-
-        # NIET idx verhogen; eerst feedback tonen op dezelfde vraag
         st.session_state.checked_open = True
         st.session_state.checked_open_idx = i
         st.rerun()
-
 
 # =============================================================
 # PAGE ROUTING
 # =============================================================
 
 if st.session_state.page == "home":
-
     st.title("🌱 Zorgpunt Meetjesland – Vragenlijsten")
 
     if not st.session_state.done_m1:
@@ -379,23 +413,14 @@ if st.session_state.page == "home":
         st.rerun()
 
     if st.session_state.done_m1 and st.session_state.done_m2 and st.session_state.done_m3:
-
         st.subheader("📜 Certificaat genereren")
-
         name = st.text_input("Naam:")
 
         if name:
             html = cert_html(name, st.session_state.score, st.session_state.max_score)
-
-            st.download_button(
-                "📄 Download certificaat",
-                html,
-                "certificaat.html",
-                "text/html"
-            )
+            st.download_button("📄 Download certificaat", html, "certificaat.html", "text/html")
 
 elif st.session_state.page == "m1_mc":
-
     run_mc_module(
         pikler_mc,
         "Module 1 – Emmi Pikler",
@@ -403,7 +428,6 @@ elif st.session_state.page == "m1_mc":
     )
 
 elif st.session_state.page == "m1_open":
-
     run_open_module(
         pikler_open,
         "Module 1 – Emmi Pikler (Open Vraag)",
@@ -411,7 +435,6 @@ elif st.session_state.page == "m1_open":
     )
 
 elif st.session_state.page == "m2":
-
     run_open_module(
         vragen_A,
         "Module 2 – Vragenlijst MEMOQ",
@@ -419,7 +442,6 @@ elif st.session_state.page == "m2":
     )
 
 elif st.session_state.page == "m3":
-
     run_open_module(
         vragen_B,
         "Module 3 – Vragenlijst MIJN OPVANG",
