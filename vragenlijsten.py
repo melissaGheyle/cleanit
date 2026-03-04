@@ -114,7 +114,7 @@ def tokenize(text: str):
     # filter: geen stopwords, geen heel korte woorden
     return {w for w in words if len(w) >= 3 and w not in DUTCH_STOPWORDS}
 
-def open_answer_ok(ans: str, model: str, min_hits: int = 2):
+def open_answer_ok(ans: str, model: str, min_hits: int = 1):
     ans_set = tokenize(ans)
     model_set = tokenize(model)
     hits = ans_set.intersection(model_set)
@@ -457,4 +457,5 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
 
