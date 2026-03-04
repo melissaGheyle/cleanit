@@ -209,22 +209,24 @@ vragen_A = [
 vragen_B = [
     ("Welke risico’s zijn er in opvang, waar vind ik de procedure?",
      "Risico-analyse in rode map. Mogelijke risico's: valrisico (vb. verzorgingsmat), scherpe voorwerpen, gevaarlijke producten, toegang (vb openstaande deur),..."),
-    ("Dagelijkse zorg – hoe doe jij dit?",
-     "Rust, nabijheid en veilige verzorging. Tegemoet komen aan de noden van elk kind"),
-    ("Oudercommunicatie – hoe doe jij dit?",
-     "Warm, eerlijk en open communiceren. Via dagelijkse gesprekken, Ziko-vo's en dagverslagen"),
-    ("Een ouder heeft een klacht. Hoe ga je ermee om?",
-     "Luisteren, erkennen, melden aan de verantwoordelijke en organisator, noteren in de klachtenmap en terugkoppelen naar de ouders."),
-    ("Wat is klachtenprocedure?",
-     "1) Ontvangst 2) Onderzoek 3) Terugkoppeling"),
-    ("Wat is grensoverschrijdend gedrag?",
-     "Fysiek of verbaal geweld, negeren, vernederen, schending van de integriteit. Dit gedrag kan van begeleider naar kind, van ouder naar kind, ouder naar begeleider, begeleiders onderling"),
     ("Crisisprocedures – stappen?",
      "1) Alarmeren 2) bellen (hulpdiensten) 3) communicatie"),
-    ("Hoe zijn leefgroepen ingedeeld?",
-     "we werken in verschillende groepen op basis van de leeftijd en ontwikkeling van de kinderen. we streven naar 1 begeleider voor 7 kinderen (bij gemengde groepen), bij peuters 1 begeleider voor 8 kinderen. Over de middag: 1 begeleider voor 14 kinderen voor maximum 2 uur."),
+    ("Wat is grensoverschrijdend gedrag?",
+     "Fysiek of verbaal geweld, negeren, vernederen, schending van de integriteit. Dit gedrag kan van begeleider naar kind, van ouder naar kind, ouder naar begeleider, begeleiders onderling"),
     ("Hoe doe je toezicht op rustruimtes?",
      "Elke 10–15 min fysieke controle in de slaapruimtes. aftekenen op de lijst die aan de deur hangt. camera's voor extra toezicht "),
+    ("Oudercommunicatie – hoe doe jij dit?",
+     "Warm, eerlijk en open communiceren. Via dagelijkse gesprekken, Ziko-vo's en dagverslagen"),
+    ("Wat is klachtenprocedure?",
+     "1) Ontvangst 2) Onderzoek 3) Terugkoppeling"),
+    ("Een ouder heeft een klacht. Hoe ga je ermee om?",
+     "Luisteren, erkennen, melden aan de verantwoordelijke en organisator, noteren in de klachtenmap en terugkoppelen naar de ouders."),  
+    ("Hoe zijn leefgroepen ingedeeld?",
+     "we werken in verschillende groepen op basis van de leeftijd en ontwikkeling van de kinderen. we streven naar 1 begeleider voor 7 kinderen (bij gemengde groepen), bij peuters 1 begeleider voor 8 kinderen. Over de middag: 1 begeleider voor 14 kinderen voor maximum 2 uur."),
+    ("Hoeveel kinderbegeleiders moeten volgens de regelgeving voorzien worden per aantal kinderen en in welke situaties kan hiervan tijdelijk afgeweken worden?,
+     "Volgens de regelgeving in Vlaanderen moet er in de kinderopvang in principe één kinderbegeleider voorzien worden per maximaal acht kinderen. Wanneer er minstens twee kinderbegeleiders aanwezig zijn in een leefgroep, mag de verhouding gemiddeld één kinderbegeleider per negen kinderen zijn. In bepaalde situaties, zoals tijdens middagpauzes of rustmomenten, kan tijdelijk een hogere ratio worden toegepast. In dat geval mag één kinderbegeleider maximaal veertien kinderen begeleiden, en dit voor maximaal twee uur per dag."),
+    ("Wat betekent draagkracht voor jou als kinderbegeleider, wanneer merk je dat je draagkracht lager wordt en wat doe je op zo’n moment?",
+    "Draagkracht is voor mij de energie en ruimte die ik heb om kinderen goed te begeleiden. Wanneer het erg druk is of ik moe ben, merk ik dat mijn draagkracht lager wordt. Dan probeer ik rustig te blijven, hulp te vragen aan collega’s of even een moment te nemen om opnieuw overzicht te krijgen."),
    
 ]
 
@@ -405,6 +407,7 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
 
 
 
