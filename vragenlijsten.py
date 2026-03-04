@@ -393,7 +393,7 @@ elif st.session_state.page == "m2":
 
     run_open_module(
         vragen_A,
-        "Module 2 – Vragenlijst A",
+        "Module 2 – Vragenlijst MEMOQ",
         "done_m2"
     )
 
@@ -402,8 +402,9 @@ elif st.session_state.page == "m3":
 
     run_open_module(
         vragen_B,
-        "Module 3 – Vragenlijst B",
+        "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
 
 
