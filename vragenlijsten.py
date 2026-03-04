@@ -222,7 +222,7 @@ vragen_B = [
     ("Een ouder heeft een klacht. Hoe ga je ermee om?",
      "Luisteren, erkennen, melden aan de verantwoordelijke en organisator, noteren in de klachtenmap en terugkoppelen naar de ouders."),  
     ("Hoe zijn leefgroepen ingedeeld?",
-     "we werken in verschillende groepen op basis van de leeftijd en ontwikkeling van de kinderen. we streven naar 1 begeleider voor 7 kinderen (bij gemengde groepen), bij peuters 1 begeleider voor 8 kinderen. Over de middag: 1 begeleider voor 14 kinderen voor maximum 2 uur."),
+     "we werken in verschillende groepen op basis van de leeftijd en ontwikkeling van de kinderen, verticale groepen. Per groep maximum 18 kinderen, in sommige groepen heb je minder kinderen want minimum 3m2 speeloppervlak per kind"),
     ("Hoeveel kinderbegeleiders moeten volgens de regelgeving voorzien worden per aantal kinderen en in welke situaties kan hiervan tijdelijk afgeweken worden?,
      "Volgens de regelgeving in Vlaanderen moet er in de kinderopvang in principe één kinderbegeleider voorzien worden per maximaal acht kinderen. Wanneer er minstens twee kinderbegeleiders aanwezig zijn in een leefgroep, mag de verhouding gemiddeld één kinderbegeleider per negen kinderen zijn. In bepaalde situaties, zoals tijdens middagpauzes of rustmomenten, kan tijdelijk een hogere ratio worden toegepast. In dat geval mag één kinderbegeleider maximaal veertien kinderen begeleiden, en dit voor maximaal twee uur per dag."),
     ("Wat betekent draagkracht voor jou als kinderbegeleider, wanneer merk je dat je draagkracht lager wordt en wat doe je op zo’n moment?",
@@ -407,6 +407,7 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
 
 
 
