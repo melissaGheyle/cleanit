@@ -126,10 +126,10 @@ vragen_A = [
 # -------------------------------------------------
 
 ("Wat betekent welbevinden bij een kind?",
-"Welbevinden betekent dat een kind zich veilig, ontspannen en goed voelt in de opvang. Dit kan je zien aan gezichtsuitdrukking, spontaniteit, energie en lichaamshouding."),
+"Welbevinden betekent dat een kind zich veilig, ontspannen en goed voelt in de opvang. Dit kan je zien aan gezichtsuitdrukking, spontaniteit, energie en open lichaamshouding."),
 
 ("Welke signalen tonen hoog welbevinden bij een kind?",
-"Een ontspannen houding, lachen, spontaan spelen, open contact met anderen en een gevoel van veiligheid."),
+"Een ontspannen houding, lachen, spontaan spelen, open contact met anderen en een gevoel van veiligheid.tijd vergeten, geen aandacht voor de omgeving."),
 
 ("Wat kan een begeleider doen wanneer het welbevinden van een kind laag is?",
 "Observeren wat het kind nodig heeft, extra aandacht geven, veiligheid creëren en eventueel overleggen met collega's of ouders."),
@@ -168,10 +168,10 @@ vragen_A = [
 # -------------------------------------------------
 
 ("Wat betekent educatieve ondersteuning in de kinderopvang?",
-"Kinderen ondersteunen in hun ontwikkeling door spel, activiteiten en interactie."),
+"Kinderen ondersteunen in hun ontwikkeling door spel, activiteiten en interactie.Taalstimulering."),
 
 ("Hoe kan een begeleider de ontwikkeling van kinderen stimuleren?",
-"Door uitdagend spelmateriaal, activiteiten, vrij spel en interactie met kinderen."),
+"Door uitdagend spelmateriaal, activiteiten, vrij spel en interactie met kinderen.praten met de kinderen, vertellen wat je doet."),
 
 ("Waarom is taalstimulering belangrijk bij baby's en peuters?",
 "Taalstimulering helpt kinderen om te communiceren, relaties op te bouwen en zich cognitief te ontwikkelen."),
@@ -207,8 +207,8 @@ vragen_A = [
 ]
 
 vragen_B = [
-     ("Welke risico’s zijn er in opvang, waar vind ik de procedure?",
-     "Risico-analyse in rode map."),
+    ("Welke risico’s zijn er in opvang, waar vind ik de procedure?",
+     "Risico-analyse in rode map. Mogelijke risico's: valrisico (vb. verzorgingsmat), scherpe voorwerpen, gevaarlijke producten, toegang (vb openstaande deur),..."),
     ("Dagelijkse zorg – hoe doe jij dit?",
      "Rust, nabijheid en veilige verzorging. Tegemoet komen aan de noden van elk kind"),
     ("Oudercommunicatie – hoe doe jij dit?",
@@ -218,13 +218,13 @@ vragen_B = [
     ("Wat is klachtenprocedure?",
      "1) Ontvangst 2) Onderzoek 3) Terugkoppeling"),
     ("Wat is grensoverschrijdend gedrag?",
-     "Fysiek of verbaal geweld, negeren, vernederen."),
+     "Fysiek of verbaal geweld, negeren, vernederen, schending van de integriteit. Dit gedrag kan van begeleider naar kind, van ouder naar kind, ouder naar begeleider, begeleiders onderling"),
     ("Crisisprocedures – stappen?",
      "1) Alarmeren 2) bellen (hulpdiensten) 3) communicatie"),
     ("Hoe zijn leefgroepen ingedeeld?",
-     "Baby's → verzorging; peuters → taal & structuur."),
+     "we werken in verschillende groepen op basis van de leeftijd en ontwikkeling van de kinderen. we streven naar 1 begeleider voor 7 kinderen (bij gemengde groepen), bij peuters 1 begeleider voor 8 kinderen. Over de middag: 1 begeleider voor 14 kinderen voor maximum 2 uur."),
     ("Hoe doe je toezicht op rustruimtes?",
-     "Elke 10–15 min fysieke controle."),
+     "Elke 10–15 min fysieke controle in de slaapruimtes. aftekenen op de lijst die aan de deur hangt. camera's voor extra toezicht "),
    
 ]
 
@@ -405,6 +405,7 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst MIJN OPVANG",
         "done_m3"
     )
+
 
 
 
