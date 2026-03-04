@@ -346,11 +346,11 @@ if st.session_state.page == "home":
         st.session_state.page = "m1_mc"
         st.session_state.idx = 0
 
-    if st.button("➡️ Module 2: Vragenlijst A", disabled=not st.session_state.done_m1):
+    if st.button("➡️ Module 2: Vragenlijst MEMOQ", disabled=not st.session_state.done_m1):
         st.session_state.page = "m2"
         st.session_state.idx = 0
 
-    if st.button("➡️ Module 3: Vragenlijst B", disabled=not st.session_state.done_m1):
+    if st.button("➡️ Module 3: Vragenlijst MIJN OPVANG", disabled=not st.session_state.done_m1):
         st.session_state.page = "m3"
         st.session_state.idx = 0
 
@@ -405,4 +405,5 @@ elif st.session_state.page == "m3":
         "Module 3 – Vragenlijst B",
         "done_m3"
     )
+
 
