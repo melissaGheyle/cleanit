@@ -120,7 +120,7 @@ def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, priorite
     ]
 
     try:
-        sheet.append_row(new_row)
+        sheet.append_row(new_row,table_range="A:I")
         load_sheet_data.clear()
 
     except Exception as e:
@@ -329,6 +329,7 @@ else:
             st.success(
                 f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw pagina."
             )
+
 
 
 
