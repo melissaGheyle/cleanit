@@ -5,6 +5,9 @@ import smtplib
 from email.mime.text import MIMEText
 import gspread
 from google.oauth2.service_account import Credentials
+# MOET ALS EERSTE STREAMLIT COMMAND
+
+st.set_page_config(page_title="Zorgpunt Risico Meldingen", layout="wide")
 
 # ============================================
 # GOOGLE SHEETS VERBINDING
@@ -320,3 +323,4 @@ else:
             st.success(
                 f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw pagina."
             )
+
