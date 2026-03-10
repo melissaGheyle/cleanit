@@ -90,14 +90,20 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # GOOGLE SHEET FUNCTIES
 # ============================================
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=120)
 def load_sheet_data():
-    try:
-        return sheet.get_all_values()
-    except Exception as e:
-        st.error(f"Google Sheets fout: {e}")
-        return []
+    for attempt in range(3):
 
+        try:
+            return sheet.get_all_values()
+
+        except Exception as e:
+
+            if attempt < 2:
+                time.sleep(2)
+            else:
+                st.error(f"Google Sheets fout: {e}")
+                return []
 
 def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
 
@@ -323,5 +329,6 @@ else:
             st.success(
                 f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw pagina."
             )
+
 
 
