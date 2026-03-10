@@ -6,7 +6,6 @@ from email.mime.text import MIMEText
 import gspread
 from google.oauth2.service_account import Credentials
 
-
 # ============================================
 # GOOGLE SHEETS VERBINDING
 # ============================================
@@ -16,16 +15,19 @@ SCOPE = [
     "https://www.googleapis.com/auth/drive",
 ]
 
-creds = Credentials.from_service_account_info(
-    st.secrets["gcp"],
-    scopes=SCOPE,
-)
+@st.cache_resource
+def connect_to_gsheet():
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp"],
+        scopes=SCOPE,
+    )
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(
+        "1k03IUszL8tp_RrSx3NBuZpBLdiM-MZugTKeeNgUzYqc"
+    ).sheet1
+    return sheet
 
-client = gspread.authorize(creds)
-
-SHEET_ID = "1k03IUszL8tp_RrSx3NBuZpBLdiM-MZugTKeeNgUzYqc"
-sheet = client.open_by_key(SHEET_ID).sheet1
-
+sheet = connect_to_gsheet()
 
 # ============================================
 # SMTP INSTELLINGEN
@@ -45,6 +47,7 @@ MAIL_ONTVANGERS = [
 
 
 def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving):
+
     onderwerp = "Nieuwe risico melding - Zorgpunt"
 
     html = f"""
@@ -67,8 +70,9 @@ def stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
             server.starttls()
             server.login(SMTP_USER, SMTP_PASS)
             server.sendmail(SMTP_USER, MAIL_ONTVANGERS, msg.as_string())
+
     except Exception as e:
-        st.error(f"Kon geen e-mail verzenden: {e}")
+        st.error(f"E-mail fout: {e}")
 
 
 # ============================================
@@ -83,7 +87,17 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # GOOGLE SHEET FUNCTIES
 # ============================================
 
+@st.cache_data(ttl=30)
+def load_sheet_data():
+    try:
+        return sheet.get_all_values()
+    except Exception as e:
+        st.error(f"Google Sheets fout: {e}")
+        return []
+
+
 def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad):
+
     new_row = [
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         naam,
@@ -95,16 +109,23 @@ def save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, priorite
         fotopad,
         "Open",
     ]
-    next_row = len(sheet.get_all_values()) + 1
-    sheet.insert_row(new_row, next_row)
 
+    try:
+        sheet.append_row(new_row)
+        load_sheet_data.clear()
 
-def load_sheet_data():
-    return sheet.get_all_values()
+    except Exception as e:
+        st.error(f"Opslaan mislukt: {e}")
 
 
 def update_status(row_number, new_status):
-    sheet.update_cell(row_number, 9, new_status)  # kolom I = status
+
+    try:
+        sheet.update_cell(row_number, 9, new_status)
+        load_sheet_data.clear()
+
+    except Exception as e:
+        st.error(f"Status update fout: {e}")
 
 
 # ============================================
@@ -117,32 +138,53 @@ menu = ["Nieuwe melding", "Dashboard"]
 choice = st.sidebar.selectbox("Menu", menu)
 
 
-
 # ============================================
-# PAGINA 1 – MELDING INDIENEN
+# PAGINA 1 – MELDING
 # ============================================
 
 if choice == "Nieuwe melding":
+
     st.title("Risico / Gevaar / Gebrek melden")
 
     naam = st.text_input("Naam medewerker *")
-    locatie = st.selectbox("Opvanglocatie *", ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"])
+
+    locatie = st.selectbox(
+        "Opvanglocatie *",
+        ["Babydroom", "’t Kinderhof", "Droomkind", "Droomhuis"],
+    )
+
     omschrijving = st.text_area("Omschrijving *")
 
-    type_melding = st.selectbox("Type", ["Risico", "Gevaar", "Gebrek"])
+    type_melding = st.selectbox(
+        "Type",
+        ["Risico", "Gevaar", "Gebrek"],
+    )
 
     categorie = st.selectbox(
         "Categorie",
         [
-            "Toezicht en handelingen", "Toegang", "Binnenruimtes", "Binnenklimaat",
-            "Buitenspelen", "Vervoer", "Slapen", "Verzorging", "Hygiëne",
-            "Vaccinaties", "Zieke kinderen en koorts", "Geneesmiddelen",
+            "Toezicht en handelingen",
+            "Toegang",
+            "Binnenruimtes",
+            "Binnenklimaat",
+            "Buitenspelen",
+            "Vervoer",
+            "Slapen",
+            "Verzorging",
+            "Hygiëne",
+            "Vaccinaties",
+            "Zieke kinderen en koorts",
+            "Geneesmiddelen",
         ],
     )
 
     prioriteit = st.selectbox(
         "Prioriteit",
-        ["1 – Direct oplossen", "2 – Binnen de week", "3 – Binnen de maand"],
+        [
+            "1 – Direct oplossen",
+            "2 – Binnen de week",
+            "3 – Binnen de maand",
+        ],
     )
 
     foto = st.file_uploader("Upload foto (optioneel)")
@@ -150,19 +192,41 @@ if choice == "Nieuwe melding":
 
     if foto:
         save_path = os.path.join(UPLOAD_FOLDER, foto.name)
+
         with open(save_path, "wb") as f:
             f.write(foto.getbuffer())
+
         fotopad = save_path
 
     if st.button("Melding indienen"):
+
         if not naam or not omschrijving:
+
             st.error("Naam en omschrijving zijn verplicht.")
+
         else:
-            save_to_sheet(naam, locatie, omschrijving, type_melding, categorie, prioriteit, fotopad)
-            stuur_mail(naam, locatie, type_melding, categorie, prioriteit, omschrijving)
+
+            save_to_sheet(
+                naam,
+                locatie,
+                omschrijving,
+                type_melding,
+                categorie,
+                prioriteit,
+                fotopad,
+            )
+
+            stuur_mail(
+                naam,
+                locatie,
+                type_melding,
+                categorie,
+                prioriteit,
+                omschrijving,
+            )
+
             st.success("Melding opgeslagen!")
             st.balloons()
-
 
 
 # ============================================
@@ -170,72 +234,47 @@ if choice == "Nieuwe melding":
 # ============================================
 
 else:
-    st.title("Dashboard Risico Meldingen")
-    # ============================================
-    # KLEINERE LETTERTYPES VOOR DASHBOARD
-    # ============================================
-    
-    st.markdown("""
-    <style>
-    
-    /* Maak algemene tekst kleiner */
-    body, p, div {
-        font-size: 14px !important;
-    }
-    
-    /* Tabeltekst kleiner */
-    .dataframe tbody td {
-        font-size: 13px !important;
-    }
-    
-    .dataframe thead th {
-        font-size: 13px !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Titel kleiner */
-    h1 {
-        font-size: 28px !important;
-    }
-    
-    /* Subheaders (zoals 'Overzicht per prioriteit') */
-    h2, h3 {
-        font-size: 20px !important;
-    }
-    
-    /* Selectbox labels kleiner */
-    label {
-        font-size: 14px !important;
-    }
-    
-    /* Items in selectbox dropdown kleiner */
-    .css-10trblm {
-        font-size: 13px !important;
-    }
-    
-    </style>
-    """, unsafe_allow_html=True)
 
+    st.title("Dashboard Risico Meldingen")
 
     data = load_sheet_data()
 
     if len(data) <= 1:
+
         st.warning("Nog geen meldingen.")
+
     else:
-        headers = ["Tijdstip", "Naam", "Locatie", "Omschrijving", "Type", "Categorie", "Prioriteit", "Foto", "Status"]
+
+        headers = [
+            "Tijdstip",
+            "Naam",
+            "Locatie",
+            "Omschrijving",
+            "Type",
+            "Categorie",
+            "Prioriteit",
+            "Foto",
+            "Status",
+        ]
+
         rows = data[1:]
 
         table_data = []
+
         for r in rows:
+
             r = r + [""] * (len(headers) - len(r))
-            table_data.append({headers[i]: r[i] for i in range(len(headers))})
 
-        st.table(table_data)
+            table_data.append(
+                {headers[i]: r[i] for i in range(len(headers))}
+            )
 
-       
+        st.dataframe(table_data, use_container_width=True)
+
         # ============================
-        # PRIORITEIT STATISTIEKEN (compact)
+        # PRIORITEIT STATISTIEKEN
         # ============================
+
         st.subheader("Overzicht per prioriteit")
 
         p1 = sum(1 for r in rows if r[6].startswith("1"))
@@ -243,11 +282,10 @@ else:
         p3 = sum(1 for r in rows if r[6].startswith("3"))
 
         col1, col2, col3 = st.columns(3)
+
         col1.metric("1 – Direct oplossen", p1)
         col2.metric("2 – Binnen de week", p2)
         col3.metric("3 – Binnen de maand", p3)
-
-
 
         # ======================================
         # STATUS AANPASSEN
@@ -258,19 +296,27 @@ else:
         sheet_rows = list(range(2, len(rows) + 2))
 
         keuzes = []
+
         for i, row in enumerate(rows):
+
             naam = row[1]
             oms = row[3][:30] + ("..." if len(row[3]) > 30 else "")
+
             keuzes.append(f"{sheet_rows[i]} — {naam} — {oms}")
 
         keuze_label = st.selectbox("Kies melding", keuzes)
 
         gekozen_rij = int(keuze_label.split("—")[0].strip())
 
-        nieuwe_status = st.selectbox("Nieuwe status", ["Open", "In behandeling", "Opgelost"])
+        nieuwe_status = st.selectbox(
+            "Nieuwe status",
+            ["Open", "In behandeling", "Opgelost"],
+        )
 
         if st.button("Status bijwerken"):
+
             update_status(gekozen_rij, nieuwe_status)
-            st.success(f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw de pagina om het resultaat te zien.")
 
-
+            st.success(
+                f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw pagina."
+            )
