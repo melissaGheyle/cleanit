@@ -135,7 +135,7 @@ def update_status(row_number, new_status):
 # STREAMLIT UI
 # ============================================
 
-st.set_page_config(page_title="Zorgpunt Risico Meldingen", layout="wide")
+
 
 menu = ["Nieuwe melding", "Dashboard"]
 choice = st.sidebar.selectbox("Menu", menu)
@@ -323,4 +323,5 @@ else:
             st.success(
                 f"Status bijgewerkt (rij {gekozen_rij}). Vernieuw pagina."
             )
+
 
