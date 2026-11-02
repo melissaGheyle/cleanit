@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import time
 from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
@@ -304,18 +305,41 @@ else:
 
         st.subheader("Status aanpassen")
 
-        sheet_rows = list(range(2, len(rows) + 2))
-
-        keuzes = []
+        # enkel meldingen die nog niet opgelost zijn, dringendste eerst
+        open_meldingen = []
 
         for i, row in enumerate(rows):
 
+            row = row + [""] * (len(headers) - len(row))
+
+            if row[8].strip() == "Opgelost":
+                continue
+
+            open_meldingen.append((i + 2, row))
+
+        open_meldingen.sort(key=lambda x: (x[1][6][:1] or "9", x[1][0]))
+
+        if not open_meldingen:
+
+            st.success("Alle meldingen zijn opgelost.")
+            st.stop()
+
+        keuzes = []
+
+        for rij, row in open_meldingen:
+
             naam = row[1]
-            oms = row[3][:30] + ("..." if len(row[3]) > 30 else "")
+            oms = row[3][:40] + ("..." if len(row[3]) > 40 else "")
+            prio = row[6][:1] or "?"
+            status = row[8] or "Open"
 
-            keuzes.append(f"{sheet_rows[i]} — {naam} — {oms}")
+            keuzes.append(
+                f"{rij} — P{prio} — {row[2]} — {oms} ({naam}, {status})"
+            )
 
-        keuze_label = st.selectbox("Kies melding", keuzes)
+        keuze_label = st.selectbox(
+            f"Kies melding ({len(keuzes)} nog op te volgen)", keuzes
+        )
 
         gekozen_rij = int(keuze_label.split("—")[0].strip())
 
